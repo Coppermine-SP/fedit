@@ -1,0 +1,5 @@
+{
+    "files.associations": {
+        "native_termui.h": "c"
+    }
+}
