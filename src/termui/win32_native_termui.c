@@ -4,14 +4,14 @@
 */
 
 #if defined _WIN32 || defined _WIN64
-#include "native_termui_h"
+#include "native_termui.h"
 #include <windows.h>
 
 terminal_size_t get_terminal_size(){
     CONSOLE_SCREEN_BUFFER_INFO info;
     terminal_size_t result;
   
-    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &info);
     result.cols =  info.srWindow.Right - info.srWindow.Left + 1;
     result.rows = info.srWindow.Bottom - info.srWindow.Top + 1;
     return result;
@@ -21,7 +21,7 @@ void enable_raw_input(){
 
 }
 
-void get_raw_input(){
+void get_raw_input(char* out){
     
 }
 #endif
