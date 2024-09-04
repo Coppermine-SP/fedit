@@ -3,7 +3,7 @@
 *   Copyright (C) 2024 Coppermine-SP <창원대학교 컴퓨터공학과 20233063 손유찬>
 */
 
-#ifdef _WIN32 || _WIN64
+#if defined _WIN32 || defined _WIN64
 #include "native_termui_h"
 #include <windows.h>
 
@@ -15,5 +15,13 @@ terminal_size_t get_terminal_size(){
     result.cols =  info.srWindow.Right - info.srWindow.Left + 1;
     result.rows = info.srWindow.Bottom - info.srWindow.Top + 1;
     return result;
+}
+
+void enable_raw_input(){
+
+}
+
+void get_raw_input(){
+    
 }
 #endif

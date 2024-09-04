@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "native_termui.h": "c"
+        "native_termui.h": "c",
+        "ioctl.h": "c"
     }
 }

@@ -6,10 +6,21 @@
 #include "textengine/textengine.h"
 #include "termui/termui.h"
 #include <stdio.h>
-#include <time.h>
+
+bool input_event(char c){
+    if(c == CTRL_KEY('q'))return false;
+    else if(c == CTRL_KEY('F')){
+        ui_show_prompt("Find");
+    }
+    return true;
+}
 
 int main(int argc, char* argv[]){
-    ui_init(false);
+    te_init(argc < 1 ? argv[1] : NULL);
+    ui_init((argc == 1));
 
-    scanf("%d");
+    //파일을 불러오지 않았을 경우, MOTD 출력
+    if(argc == 1) ui_set_motd(true);
+
+    ui_input_loop(&input_event);
 }
