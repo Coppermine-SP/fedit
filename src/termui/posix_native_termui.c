@@ -6,6 +6,7 @@
 #if defined __APPLE__ || defined __linux__ || defined __linux
 #include "native_termui.h"
 #include <sys/ioctl.h>
+#include <sys/select.h>
 #include <unistd.h>
 #include <termios.h>
 
@@ -20,7 +21,7 @@ terminal_size_t get_terminal_size(){
     return result;
 }
 
-void enable_raw_input(){
+void configure_term_env(){
     struct termios attribute;
     tcgetattr(STDIN_FILENO, &attribute);
     attribute.c_iflag &= ~(IXON);
@@ -29,6 +30,8 @@ void enable_raw_input(){
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &attribute);
 }
 
-void get_raw_input(char* out){ read(STDIN_FILENO, out, 1); }
+void get_raw_input(char* out){ 
+    read(STDIN_FILENO, out, 1);
+}
 
 #endif

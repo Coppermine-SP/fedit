@@ -17,7 +17,7 @@ terminal_size_t get_terminal_size(){
     return result;
 }
 
-void enable_raw_input(){
+void configure_term_env(){
     HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
     DWORD dw_mode = 0;
     terminal_size_t size = get_terminal_size();

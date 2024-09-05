@@ -20,7 +20,7 @@ int main(int argc, char* argv[]){
     ui_init((argc == 1));
 
     //파일을 불러오지 않았을 경우, MOTD 출력
-    if(argc == 1) ui_set_motd(true);
+    if(argc == 1) ui_render_motd(true);
 
     ui_input_loop(&input_event);
 }
