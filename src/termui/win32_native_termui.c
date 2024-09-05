@@ -18,10 +18,16 @@ terminal_size_t get_terminal_size(){
 }
 
 void enable_raw_input(){
+    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    DWORD dw_mode = 0;
+    terminal_size_t size = get_terminal_size();
 
+    GetConsoleMode(handle, &dw_mode);
+    dw_mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+    SetConsoleMode(handle, dw_mode);
 }
 
 void get_raw_input(char* out){
-    
+    *out = _getch();
 }
 #endif
