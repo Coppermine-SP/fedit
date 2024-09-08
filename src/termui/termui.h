@@ -39,4 +39,4 @@ void ui_input_loop(bool (*callback)(char c));
 /// @param msg 프롬프트 스트링
 char* const ui_show_prompt(char* const msg);
 
-void ui_render(char* const screen_buffer);
+void ui_render(const char* screen_buf, int len);

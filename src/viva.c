@@ -13,8 +13,9 @@ bool input_event(char c){
     if(c == CTRL_KEY('q'))return false;
     else if(c == CTRL_KEY('F')){
         char* str = ui_show_prompt("Find");
-
-        
+    }
+    else{
+        ui_render(te_get_screen_buffer(), 100);
     }
     return true;
 }
@@ -29,5 +30,7 @@ int main(int argc, char* argv[]){
 
     ui_set_status(0, 0, file_name);
 
+
+    
     ui_input_loop(&input_event);
 }

@@ -7,4 +7,6 @@
 /// @param file_name (nullable) 파일 이름
 void te_init(const char* file_name);
 
+const char* te_get_screen_buffer();
+
 void gap_open();

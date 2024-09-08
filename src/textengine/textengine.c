@@ -34,6 +34,10 @@ void te_init(char* const file_name){
     }
 }
 
+const char* te_get_screen_buffer(){
+    return buf;
+}
+
 void gap_open(){
     if(!is_gap_open)
     {

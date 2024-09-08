@@ -17,6 +17,7 @@
 #define CURSOR_SHOW printf("\x1b[?25h")
 #define CLEAR_LINE printf("\x1b[K")
 #define CLEAR_SCREEN printf("\x1b[2J")
+#define CLEAR_UP printf("\x1b[1J")
 #define COLOR_INVERT printf("\x1b[7m")
 #define COLOR_NORMAL printf("\x1b[0m")
 
@@ -149,6 +150,38 @@ char* const ui_show_prompt(char* msg){
     if(prompt_input_buf[0] == '\0') return NULL;
 
     return prompt_input_buf;
+}
+
+void ui_render(const char* screen_buf, int len){
+    CURSOR_HIDE;
+    CURSOR_GOTO(terminal_size.rows -2, terminal_size.cols);
+    CLEAR_UP;
+    CURSOR_GOTO(0, 0);
+    
+    const char* cur = screen_buf;
+    for(int i = 1; i < terminal_size.rows - 2; i++){
+        CURSOR_GOTO(i, 0);
+
+        if((cur - screen_buf) < len){
+            for(int j = 0; j < terminal_size.cols - 1; j++){
+                if((cur - screen_buf) >= len) break;
+
+                if(*cur == '\r' || *cur == '\0'){
+                    cur++;
+                    continue;
+                }
+                else if(*cur == '\n'){
+                    cur++;
+                    break;
+                }
+
+                printf("%c", *(cur++));
+            }
+        }
+        else{
+            printf("~");
+        }
+    }
 }
 
 void ui_init(){
