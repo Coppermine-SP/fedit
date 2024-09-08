@@ -4,7 +4,7 @@
 */
 
 /// @brief TextEngine을 초기화합니다.
-/// @param file_loc (nullable) 파일 경로
-void te_init(const char* file_loc);
+/// @param file_name (nullable) 파일 이름
+void te_init(const char* file_name);
 
 void gap_open();

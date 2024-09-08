@@ -15,10 +15,11 @@ static long buf_len;
 static bool is_gap_open = false;
 static char* gap_begin;
 
-void te_init(const char* file_loc){
-    if(file_loc != NULL){
-        FILE* file = fopen(file_loc, "r");
+void te_init(char* const file_name){
+    if(file_name != NULL){
+        FILE* file = fopen(file_name, "r");
 
+        if(file == NULL) goto empty_file;
         fseek(file, 0, SEEK_END);
         buf_len = ftell(file);
         fseek(file, 0, SEEK_SET);
@@ -27,7 +28,9 @@ void te_init(const char* file_loc){
         fread(buf, sizeof(char), buf_len, file);
     }
     else{
-        
+        empty_file:
+
+
     }
 }
 
