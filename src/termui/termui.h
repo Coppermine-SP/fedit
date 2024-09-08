@@ -5,6 +5,8 @@
 #include <stdbool.h>
 
 #define CTRL_KEY(x) ((x)&0x1f)
+#define ESC_KEY 27
+#define ENTER_KEY 13
 
 typedef struct{
     char* file_name;
@@ -14,11 +16,16 @@ typedef struct{
 
 /// @brief TUI 환경을 초기화합니다.
 void ui_init();
-void ui_set_status();
+
+/// @brief 상태 바를 업데이트 합니다.
+/// @param cursor_line 
+/// @param total_lines 
+/// @param file_name 
+void ui_set_status(int cursor_line, int total_lines, char* const file_name);
 
 /// @brief UI 메시지를 설정합니다.
 /// @param msg 메시지 스트링
-void ui_show_message(char* const msg);
+void ui_show_message(const char* msg);
 
 /// @brief MOTD를 표출 또는 삭제합니다.
 /// @param state 표시(true), 삭제(false)

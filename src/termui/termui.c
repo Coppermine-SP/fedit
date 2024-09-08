@@ -30,10 +30,29 @@ static terminal_size_t terminal_size;
 static status_t status;
 static bool motd_showing = false;
 
-void ui_show_message(char* const msg){
+void ui_show_message(const char* msg){
     CURSOR_HIDE;
     CURSOR_GOTO(terminal_size.rows, 0);
     printf("%s", msg);
+}
+
+static bool get_file_type(char* const src, char* buf, int buf_len){
+    int src_len = strlen(src);
+    for(int i = src_len - 1; i >= 0; i--){
+        if(src[i] == '.'){
+            int ext_len = src_len - i - 1;
+            if (ext_len < buf_len) {
+                strncpy(buf, &src[i + 1], ext_len);
+                buf[ext_len] = '\0';
+            } 
+            else {
+                strncpy(buf, &src[i + 1], buf_len - 1);
+                buf[buf_len - 1] = '\0';
+            }
+            return true;
+        }
+    }
+    return false;
 }
 
 static void render_status(){
@@ -43,10 +62,14 @@ static void render_status(){
 
     char left_buf[40];
     char right_buf[20];
-    char filetype_string[10];
+    char filetype_string[15];
+    bool has_filetype = false;
 
+    if(status.file_name != NULL)
+    has_filetype = get_file_type(status.file_name, filetype_string, 15);
+    
     int left = sprintf(left_buf,"[%s] - %d lines", (status.file_name == NULL ? default_file_name_string : status.file_name), status.total_lines);
-    int right = sprintf(right_buf,"%s | %d/%d",(status.file_name == NULL) ? default_file_type_string : filetype_string ,status.cursor_line, status.total_lines);
+    int right = sprintf(right_buf,"%s | %d/%d",(has_filetype) ? filetype_string :default_file_type_string ,status.cursor_line, status.total_lines);
 
     printf("%s",left_buf);
     for(int i = 0; i < terminal_size.cols - (left + right); i++) printf(" ");
@@ -74,10 +97,10 @@ void ui_render_motd(bool state){
     }
 }
 
-void ui_set_status(status_t x){
-    status.cursor_line = x.cursor_line;
-    status.file_name = x.file_name;
-    status.total_lines = x.total_lines;
+void ui_set_status(int cursor_line, int total_lines, char* const file_name){
+    status.cursor_line = cursor_line;
+    status.file_name = file_name;
+    status.total_lines = total_lines;
 
     render_status();
 }
@@ -96,7 +119,14 @@ static bool prompt_input_event(char c){
     if(prompt_input_idx - 1 > PROMPT_INPUT_BUFFER_SIZE) return false;
 
     if(iscntrl(c)){
-        return false;
+        if(c == ESC_KEY){
+            prompt_input_buf[0] = '\0';
+            return false;
+        }
+        else if(c == ENTER_KEY){
+            prompt_input_buf[prompt_input_idx] = '\0';
+            return false;
+        }
     }
     else{
         prompt_input_buf[prompt_input_idx++] = c;
@@ -114,9 +144,10 @@ char* const ui_show_prompt(char* msg){
     prompt_input_idx = 0;
     memset(prompt_input_buf, 0, PROMPT_INPUT_BUFFER_SIZE);
     ui_input_loop(&prompt_input_event);
-    prompt_input_buf[prompt_input_idx] = '\0';
 
-    ui_set_message(default_message_string);
+    ui_show_message(default_message_string);
+    if(prompt_input_buf[0] == '\0') return NULL;
+
     return prompt_input_buf;
 }
 
@@ -127,11 +158,5 @@ void ui_init(){
 
     terminal_size = get_terminal_size();
     ui_show_message(default_message_string);
-
-    status_t x;
-    x.cursor_line = 1;
-    x.file_name = NULL;
-    x.total_lines = 0;
-    ui_set_status(x);
 }
  
