@@ -2,6 +2,7 @@
 *   termui.c - fedit <2024-2 Advanced Data Structure>
 *   Copyright (C) 2024 Coppermine-SP <창원대학교 컴퓨터공학과 20233063 손유찬>
 */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -10,8 +11,11 @@
 #include "termui.h"
 #include "native_termui.h"
 
+// #region Macro constants
 #define PROMPT_INPUT_BUFFER_SIZE 50
+// #endregion
 
+// #region Macro functions
 #define CURSOR_GOTO(row, col) printf("\033[%d;%dH", (row), (col))
 #define CURSOR_HIDE printf("\x1b[?25l")
 #define CURSOR_SHOW printf("\x1b[?25h")
@@ -20,21 +24,34 @@
 #define CLEAR_UP printf("\x1b[1J")
 #define COLOR_INVERT printf("\x1b[7m")
 #define COLOR_NORMAL printf("\x1b[0m")
+// #endregion
 
+// #region String constants
 static const char* default_message_string = "HELP: Ctrl-S = Save | Ctrl-Q = Quit | Ctrl-F = Find";
 static const char* default_file_name_string = "No Name";
 static const char* default_file_type_string = "no ft";
 static const char* title_string = "fedit -- Visual Text Editor";
 static const char* subtitle_string = "Copyright (C) 2024 Coppermine-SP";
+// #endregion
 
+// #region Global variables
 static terminal_size_t terminal_size;
 static status_t status;
 static bool motd_showing = false;
+// #endregion
+
+void ui_alert(){
+    printf("\a");
+}
 
 void ui_show_message(const char* msg){
     CURSOR_HIDE;
     CURSOR_GOTO(terminal_size.rows, 0);
     printf("%s", msg);
+}
+
+void ui_show_default_message(){
+    ui_show_message(default_message_string);
 }
 
 static bool get_file_type(char* const src, char* buf, int buf_len){
@@ -136,10 +153,16 @@ static bool prompt_input_event(char c){
     }
 }
 
+void ui_get_terminal_size(int* cols, int* rows){
+    if(cols != NULL) *cols = terminal_size.cols;
+    if(rows != NULL) *rows = terminal_size.rows;
+}
+
 char* const ui_show_prompt(char* msg){
     CURSOR_GOTO(terminal_size.rows, 0);
     CLEAR_LINE;
     printf("%s : ", msg);
+    ui_alert();
 
     //입력 버퍼 초기화
     prompt_input_idx = 0;
@@ -154,7 +177,7 @@ char* const ui_show_prompt(char* msg){
 
 void ui_render(const char* screen_buf, int len){
     CURSOR_HIDE;
-    CURSOR_GOTO(terminal_size.rows -2, terminal_size.cols);
+    CURSOR_GOTO(terminal_size.rows-2, terminal_size.cols);
     CLEAR_UP;
     CURSOR_GOTO(0, 0);
     
@@ -163,7 +186,7 @@ void ui_render(const char* screen_buf, int len){
         CURSOR_GOTO(i, 0);
 
         if((cur - screen_buf) < len){
-            for(int j = 0; j < terminal_size.cols - 1; j++){
+            for(int j = 0; j < terminal_size.cols - 2; j++){
                 if((cur - screen_buf) >= len) break;
 
                 if(*cur == '\r' || *cur == '\0'){

@@ -27,6 +27,9 @@ void ui_set_status(int cursor_line, int total_lines, char* const file_name);
 /// @param msg 메시지 스트링
 void ui_show_message(const char* msg);
 
+/// @brief 기본 UI 메세지를 출력합니다.
+void ui_show_default_message();
+
 /// @brief MOTD를 표출 또는 삭제합니다.
 /// @param state 표시(true), 삭제(false)
 void ui_render_motd(bool state);
@@ -39,4 +42,15 @@ void ui_input_loop(bool (*callback)(char c));
 /// @param msg 프롬프트 스트링
 char* const ui_show_prompt(char* const msg);
 
+/// @brief 스크린 버퍼를 그립니다.
+/// @param screen_buf 스크린 버퍼
+/// @param len 버퍼 크기
 void ui_render(const char* screen_buf, int len);
+
+/// @brief 터미널 크기를 구합니다.
+/// @param cols 터미널 열 변수 intptr (nullable)
+/// @param rows 터미널 행 변수 intptr (nullable)
+void ui_get_terminal_size(int* cols, int* rows);
+
+/// @brief 터미널에서 경고음을 재생합니다.
+void ui_alert();
