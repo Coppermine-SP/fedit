@@ -34,6 +34,10 @@ void te_init(char* const file_name){
     }
 }
 
+void te_dispose(){
+    
+}
+
 const char* te_get_screen_buffer(){
     return buf;
 }

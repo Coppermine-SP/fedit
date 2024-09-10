@@ -7,9 +7,9 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
-#include <ctype.h>
 #include "termui.h"
 #include "native_termui.h"
+#include "termui_types.h"
 
 // #region Macro constants
 #define PROMPT_INPUT_BUFFER_SIZE 50
@@ -19,6 +19,8 @@
 #define CURSOR_GOTO(row, col) printf("\033[%d;%dH", (row), (col))
 #define CURSOR_HIDE printf("\x1b[?25l")
 #define CURSOR_SHOW printf("\x1b[?25h")
+#define CURSOR_SAVE printf("\x1b[s")
+#define CURSOR_RESTORE printf("\x1b[u")
 #define CLEAR_LINE printf("\x1b[K")
 #define CLEAR_SCREEN printf("\x1b[2J")
 #define CLEAR_UP printf("\x1b[1J")
@@ -47,6 +49,7 @@ void ui_alert(){
 void ui_show_message(const char* msg){
     CURSOR_HIDE;
     CURSOR_GOTO(terminal_size.rows, 0);
+    CLEAR_LINE;
     printf("%s", msg);
 }
 
@@ -123,20 +126,23 @@ void ui_set_status(int cursor_line, int total_lines, char* const file_name){
     render_status();
 }
 
-void ui_input_loop(bool (*callback)(char c)){
+void ui_input_loop(bool (*callback)(enum key_type type, char c)){
     while(true){
         char c;
-        get_raw_input(&c);
-        if(!callback(c)) break;
+        enum key_type type;
+
+        type = nt_get_raw_input(&c);
+        if(type == TIMEOUT) continue;
+        if(!callback(type, c)) break;
     }
 }
 
 static char prompt_input_buf[PROMPT_INPUT_BUFFER_SIZE];
 static int prompt_input_idx;
-static bool prompt_input_event(char c){
+static bool prompt_input_event(enum key_type type, char c){
     if(prompt_input_idx - 1 > PROMPT_INPUT_BUFFER_SIZE) return false;
 
-    if(iscntrl(c)){
+    if(type == CONTROL_KEY){
         if(c == ESC_KEY){
             prompt_input_buf[0] = '\0';
             return false;
@@ -158,7 +164,7 @@ void ui_get_terminal_size(int* cols, int* rows){
     if(rows != NULL) *rows = terminal_size.rows;
 }
 
-char* const ui_show_prompt(char* msg){
+bool ui_show_prompt(char* msg, char* buf){
     CURSOR_GOTO(terminal_size.rows, 0);
     CLEAR_LINE;
     printf("%s : ", msg);
@@ -170,9 +176,10 @@ char* const ui_show_prompt(char* msg){
     ui_input_loop(&prompt_input_event);
 
     ui_show_message(default_message_string);
-    if(prompt_input_buf[0] == '\0') return NULL;
+    if(prompt_input_buf[0] == '\0') return false;
 
-    return prompt_input_buf;
+    strcpy(buf, prompt_input_buf);
+    return true;
 }
 
 void ui_render(const char* screen_buf, int len){
@@ -207,12 +214,23 @@ void ui_render(const char* screen_buf, int len){
     }
 }
 
+void ui_cursor_move(unsigned x, unsigned y){
+    if(x > terminal_size.cols || y > (terminal_size.rows -2)) return;
+
+    CURSOR_GOTO(x+1, y+1);
+    CURSOR_SHOW;
+}
+
 void ui_init(){
     setvbuf(stdout, NULL, _IONBF, 0);
-    configure_term_env();
+    nt_configure_term_env();
     CLEAR_SCREEN;
 
-    terminal_size = get_terminal_size();
+    terminal_size = nt_get_terminal_size();
     ui_show_message(default_message_string);
+}
+
+void ui_dispose(){
+    CLEAR_SCREEN;
 }
  

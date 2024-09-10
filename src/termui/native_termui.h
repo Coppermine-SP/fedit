@@ -4,6 +4,7 @@
 */
 
 #include <stdbool.h>
+#include "termui_types.h"
 
 #define INPUT_TIMEOUT 10
 
@@ -12,7 +13,7 @@ typedef struct {
     int rows;
 } terminal_size_t;
 
-terminal_size_t get_terminal_size();
-void configure_term_env();
-void get_raw_input(char* out);
+terminal_size_t nt_get_terminal_size();
+void nt_configure_term_env();
+enum key_type nt_get_raw_input(char* out);
 
