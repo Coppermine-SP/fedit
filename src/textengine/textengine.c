@@ -24,13 +24,14 @@ void te_init(char* const file_name){
         buf_len = ftell(file);
         fseek(file, 0, SEEK_SET);
 
-        buf = (char*)malloc(buf_len);
+        buf = (char*)malloc(buf_len * sizeof(char));
         fread(buf, sizeof(char), buf_len, file);
     }
     else{
         empty_file:
 
-
+        buf_len = 1;
+        buf = (char*)calloc(1, sizeof(char));
     }
 }
 

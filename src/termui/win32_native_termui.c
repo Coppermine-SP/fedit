@@ -22,7 +22,6 @@
 #define HOME_KEY 71
 #define END_KEY 79
 
-
 terminal_size_t nt_get_terminal_size(){
     CONSOLE_SCREEN_BUFFER_INFO info;
     terminal_size_t result;
