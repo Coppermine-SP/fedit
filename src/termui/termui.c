@@ -143,11 +143,11 @@ static bool prompt_input_event(enum key_type type, char c){
     if(prompt_input_idx - 1 > PROMPT_INPUT_BUFFER_SIZE) return false;
 
     if(type == CONTROL_KEY){
-        if(c == ESC_KEY){
+        if(type == ESC){
             prompt_input_buf[0] = '\0';
             return false;
         }
-        else if(c == ENTER_KEY){
+        else if(type == ENTER){
             prompt_input_buf[prompt_input_idx] = '\0';
             return false;
         }

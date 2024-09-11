@@ -41,13 +41,15 @@ bool input_event(enum key_type type, char c)
         else if(type == DOWN_ARROW) printf("DOWN ");
         else if(type == RIGHT_ARROW) printf("RIGHT ");
         else if(type == LEFT_ARROW) printf("LEFT ");
+        else if(type == ENTER) printf("ENTER ");
+        else if(type == BACKSPACE) printf("BACKSPACE ");
         else if(type == PGUP) printf("PGUP ");
         else if(type == PGDOWN) printf("PGDOWN ");
         else if(type == HOME) printf("HOME ");
         else if(type == END) printf("END ");
     }
     else{
-        ui_render(te_get_screen_buffer(), 100);
+        //ui_render(te_get_screen_buffer(), 100);
         ui_cursor_move(1, 1);
     }
     return true;

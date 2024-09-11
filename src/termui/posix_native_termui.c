@@ -14,6 +14,9 @@
 #include <stdio.h>
 #include <ctype.h>
 
+#define ESC_KEY 27
+#define ENTER_KEY 13
+#define BACKSPACE_KEY 127
 #define HOME_KEY 72
 #define END_KEY 70
 #define PGUP_KEY 53

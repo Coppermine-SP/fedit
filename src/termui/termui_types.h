@@ -7,13 +7,13 @@
 #define _TERMUI_TYPES_H_
 
 #define CTRL_KEY(x) ((x)&0x1f)
-#define ESC_KEY 27
-#define ENTER_KEY 13
-#define BACKSPACE_KEY 127
 
 enum key_type{
+    TIMEOUT,
     NORMAL_KEY,
     CONTROL_KEY,
+    BACKSPACE,
+    ENTER,
     ESC,
     HOME,
     END,
@@ -22,8 +22,7 @@ enum key_type{
     UP_ARROW,
     DOWN_ARROW,
     LEFT_ARROW,
-    RIGHT_ARROW,
-    TIMEOUT
+    RIGHT_ARROW
 };
 
 #endif
