@@ -97,6 +97,8 @@ enum key_type nt_get_raw_input(char* out){
 
                 else return ESC;
             }
+            else if(c == ENTER_KEY) return ENTER;
+            else if(c == BACKSPACE_KEY) return BACKSPACE;
             else{
                 *out = c;
                 return CONTROL_KEY;
