@@ -53,7 +53,7 @@ void ui_dispose();
 /// @param rows 터미널 행 변수 intptr (nullable)
 void ui_get_terminal_size(int* cols, int* rows);
 
-/// @brief 에디터 영역내에서 커서를 이동합니다.
+/// @brief 편집 영역에서 커서를 이동합니다.
 /// @param x X 좌표
 /// @param y Y 좌표
 void ui_cursor_move(unsigned x, unsigned y);
