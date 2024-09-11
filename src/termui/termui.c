@@ -16,7 +16,7 @@
 // #endregion
 
 // #region Macro functions
-#define CURSOR_GOTO(row, col) printf("\033[%d;%dH", (row), (col))
+#define CURSOR_GOTO(row, col) printf("\x1b[%d;%dH", (row), (col))
 #define CURSOR_HIDE printf("\x1b[?25l")
 #define CURSOR_SHOW printf("\x1b[?25h")
 #define CURSOR_SAVE printf("\x1b[s")
@@ -98,7 +98,7 @@ static void render_status(){
     COLOR_NORMAL;
 }
 
-void ui_render_motd(bool state){
+void ui_set_motd(bool state){
     int title_len = strlen(title_string);
     int subtitle_len = strlen(subtitle_string);
     CURSOR_HIDE;
@@ -151,10 +151,14 @@ static bool prompt_input_event(enum key_type type, char c){
             prompt_input_buf[prompt_input_idx] = '\0';
             return false;
         }
+        else return true;
     }
-    else{
+    else if(type == NORMAL_KEY){
         prompt_input_buf[prompt_input_idx++] = c;
         printf("%c", c);
+        return true;
+    }
+    else{
         return true;
     }
 }
@@ -182,14 +186,14 @@ bool ui_show_prompt(char* msg, char* buf){
     return true;
 }
 
-void ui_render(const char* screen_buf, int len){
+void ui_draw_text(const char* screen_buf, int len){
     CURSOR_HIDE;
     CURSOR_GOTO(terminal_size.rows-2, terminal_size.cols);
     CLEAR_UP;
     CURSOR_GOTO(0, 0);
     
     const char* cur = screen_buf;
-    for(int i = 1; i < terminal_size.rows - 2; i++){
+    for(int i = 1; i < terminal_size.rows - 1; i++){
         CURSOR_GOTO(i, 0);
 
         if((cur - screen_buf) < len){
@@ -217,7 +221,7 @@ void ui_render(const char* screen_buf, int len){
 void ui_cursor_move(unsigned x, unsigned y){
     if(x > terminal_size.cols || y > (terminal_size.rows -2)) return;
 
-    CURSOR_GOTO(x+1, y+1);
+    CURSOR_GOTO(y+1, x+1);
     CURSOR_SHOW;
 }
 
@@ -232,5 +236,6 @@ void ui_init(){
 
 void ui_dispose(){
     CLEAR_SCREEN;
+    nt_restore_term_env();
 }
  

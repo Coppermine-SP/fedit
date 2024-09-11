@@ -29,7 +29,7 @@ void ui_show_default_message();
 
 /// @brief MOTD를 표출 또는 삭제합니다.
 /// @param state 표시(true), 삭제(false)
-void ui_render_motd(bool state);
+void ui_set_motd(bool state);
 
 /// @brief stdin에서 키 입력을 받으면 콜백 함수를 실행합니다.
 /// @param callback 콜백 함수를 지정합니다. 콜백 함수의 반환값이 false이면, 루프를 탈출합니다.
@@ -43,7 +43,7 @@ bool ui_show_prompt(char* const msg, char* buf);
 /// @brief 스크린 버퍼를 그립니다.
 /// @param screen_buf 스크린 버퍼
 /// @param len 버퍼 크기
-void ui_render(const char* screen_buf, int len);
+void ui_draw_text(const char* screen_buf, int len);
 
 /// @brief 종료하기 위해 정리합니다.
 void ui_dispose();
