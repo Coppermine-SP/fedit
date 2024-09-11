@@ -27,6 +27,9 @@ static unsigned y_pos = 0;
 bool quit_function();
 bool find_function();
 bool save_function();
+
+void editor_cursor_move(enum key_type x);
+void editor_draw();
 // #endregion
 
 bool input_event(enum key_type type, char c)
@@ -37,10 +40,7 @@ bool input_event(enum key_type type, char c)
             else if (c == CTRL_KEY('f')) return find_function();
             else if (c == CTRL_KEY('s')) return save_function();
         }
-        else if(type == UP_ARROW) printf("UP ");
-        else if(type == DOWN_ARROW) printf("DOWN ");
-        else if(type == RIGHT_ARROW) printf("RIGHT ");
-        else if(type == LEFT_ARROW) printf("LEFT ");
+        else if(type >= UP_ARROW) editor_cursor_move(type);
         else if(type == ENTER) printf("ENTER ");
         else if(type == BACKSPACE) printf("BACKSPACE ");
         else if(type == PGUP) printf("PGUP ");
@@ -49,8 +49,7 @@ bool input_event(enum key_type type, char c)
         else if(type == END) printf("END ");
     }
     else{
-        //ui_render(te_get_screen_buffer(), 100);
-        ui_cursor_move(1, 1);
+        printf("%c", c);
     }
     return true;
 }
@@ -62,13 +61,45 @@ int main(int argc, char *argv[])
     ui_init();
 
     // 파일을 불러오지 않았을 경우, MOTD 출력
-    if (argc == 1)
-        ui_render_motd(true);
+    if (argc == 1) ui_set_motd(true);
+    editor_draw();
 
-    ui_set_status(0, 0, file_name);
-
-    ui_cursor_move(0, 0);
     ui_input_loop(input_event);
+}
+
+void editor_cursor_move(enum key_type x){
+    int cols, rows;
+    ui_get_terminal_size(&cols, &rows);
+
+    if(x == UP_ARROW){
+        if(y_pos == 0) ui_alert();
+        else y_pos--;
+        
+    }
+    else if(x == DOWN_ARROW){
+        if(y_pos >= (rows-3)) ui_alert();
+        else y_pos++;
+
+    }
+    else if(x == LEFT_ARROW){
+        if(x_pos == 0) ui_alert();
+        else x_pos--;
+    }
+    else{
+        if(x_pos >= cols) ui_alert();
+        else x_pos++;
+    }
+    ui_cursor_move(x_pos, y_pos);
+}
+
+void editor_draw(){
+    ui_set_status((y_pos + 1), 0, file_name);
+    //ui_draw_text(te_get_screen_buffer(), 0);
+    ui_cursor_move(x_pos, y_pos);
+}
+
+void editor_update(){
+
 }
 
 // #region Quit function
