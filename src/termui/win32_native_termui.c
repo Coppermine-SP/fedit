@@ -93,7 +93,7 @@ enum key_type nt_get_raw_input(char* out){
 
     }
     else{
-        Sleep(10);
+        Sleep(1);
         return TIMEOUT;
     }
 }
