@@ -14,6 +14,8 @@
 #include <stdio.h>
 #include <ctype.h>
 
+#define CSI 91
+#define MOUSE_POS 'M'
 #define ESC_KEY 27
 #define ENTER_KEY 13
 #define BACKSPACE_KEY 127
@@ -27,6 +29,8 @@
 #define LEFT_ARROW_KEY 68
 #define RIGHT_ARROW_KEY 67
 
+static struct termios default_attribute;
+
 terminal_size_t nt_get_terminal_size(){
     struct winsize w;
     terminal_size_t result;
@@ -39,8 +43,9 @@ terminal_size_t nt_get_terminal_size(){
 }
 
 void nt_configure_term_env(){
-    struct termios attribute;
-    tcgetattr(STDIN_FILENO, &attribute);
+    tcgetattr(STDIN_FILENO, &default_attribute);
+    struct termios attribute = default_attribute;
+
     attribute.c_iflag &= ~(ICRNL | IXON | BRKINT | INPCK);
     attribute.c_oflag &= ~(OPOST);
     attribute.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
@@ -48,7 +53,14 @@ void nt_configure_term_env(){
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &attribute);
 
     //switch to the alternate screen buffer mode.
-    printf("\033[?1049h\033[2J\033[H");
+    printf("\x1b[?1049h\x1b[?1000h");
+}
+
+void nt_restore_term_env(){
+    printf("\x1b[?1049l\x1b[?1003l");
+    tcsetattr(STDIN_FILENO, TCSAFLUSH, &default_attribute);
+
+    puts("");
 }
 
 enum key_type nt_get_raw_input(char* out){ 
@@ -71,7 +83,7 @@ enum key_type nt_get_raw_input(char* out){
             if(c == ESC_KEY){
                 char buf[3];
                 if(nt_get_raw_input(buf) == TIMEOUT) return ESC;
-                if(buf[0] == '[' && nt_get_raw_input((buf + 1)) != TIMEOUT){
+                if(buf[0] == CSI && nt_get_raw_input((buf + 1)) != TIMEOUT){
                     switch(buf[1]){
                         case UP_ARROW_KEY:
                             return UP_ARROW;
@@ -92,27 +104,32 @@ enum key_type nt_get_raw_input(char* out){
                                 else return PGDOWN;
                             }
                             return ESC;
+                        case MOUSE_POS:
+                            for(int i = 0; i < 6; i++){
+                                if(nt_get_raw_input(NULL) == TIMEOUT) break;
+                            }
+                            return TIMEOUT;
+                        default:
+                            return TIMEOUT;
                     }
                 }
-
                 else return ESC;
             }
             else if(c == ENTER_KEY) return ENTER;
             else if(c == BACKSPACE_KEY) return BACKSPACE;
             else{
-                *out = c;
+                if(out != NULL) *out = c;
                 return CONTROL_KEY;
             }
         }
         else{
-            *out = c;
+            if(out != NULL) *out = c;
             return NORMAL_KEY;
         }
     }
     else{
         return TIMEOUT;
     }
-
 }
 
 #endif
