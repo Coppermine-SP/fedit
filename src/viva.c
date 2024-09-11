@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <signal.h>
 #include "textengine/textengine.h"
 #include "termui/termui.h"
 #include "termui/termui_types.h"
@@ -30,6 +31,10 @@ bool save_function();
 
 void editor_cursor_move(enum key_type x);
 void editor_draw();
+void editor_draw_cursor();
+void editor_quit();
+
+void signal_handler(int sig);
 // #endregion
 
 bool input_event(enum key_type type, char c)
@@ -59,17 +64,27 @@ int main(int argc, char *argv[])
     file_name  = argc > 1 ? argv[1] : NULL;
     te_init(file_name);
     ui_init();
+    signal(SIGINT, signal_handler);
 
-    // 파일을 불러오지 않았을 경우, MOTD 출력
-    if (argc == 1) ui_set_motd(true);
     editor_draw();
+    if (argc == 1) ui_set_motd(true);
 
     ui_input_loop(input_event);
+    editor_quit();
 }
 
+void signal_handler(int sig){
+    if(sig == SIGINT){
+        editor_quit();
+        exit(0);
+    }
+}
+
+// #region Editor functions
 void editor_cursor_move(enum key_type x){
     int cols, rows;
-    ui_get_terminal_size(&cols, &rows);
+    ui_get_terminal_size(&cols, 
+    &rows);
 
     if(x == UP_ARROW){
         if(y_pos == 0) ui_alert();
@@ -89,12 +104,16 @@ void editor_cursor_move(enum key_type x){
         if(x_pos >= cols) ui_alert();
         else x_pos++;
     }
-    ui_cursor_move(x_pos, y_pos);
+    editor_draw_cursor();
 }
 
 void editor_draw(){
     ui_set_status((y_pos + 1), 0, file_name);
-    //ui_draw_text(te_get_screen_buffer(), 0);
+    ui_draw_text(te_get_screen_buffer(), 0);
+    editor_draw_cursor();
+}
+
+void editor_draw_cursor(){
     ui_cursor_move(x_pos, y_pos);
 }
 
@@ -102,7 +121,13 @@ void editor_update(){
 
 }
 
-// #region Quit function
+void editor_quit(){
+    te_dispose();
+    ui_dispose();
+}
+// #endregion
+
+// #region Quit
 static bool quit_override = false;
 bool quit_function_input_event(enum key_type type, char c)
 {
@@ -120,23 +145,22 @@ bool quit_function()
 
         if (!quit_override){
             ui_show_default_message();
+            editor_draw_cursor();
             return true;
         }
     }
-
-    te_dispose();
-    ui_dispose();
     return false;
 }
+
 // #endregion
 
-// #region Find function
+// #region Find
 bool find_function(){
     return false;
 }
 // #endregion
 
-// #region Save function
+// #region Save
 bool save_function(){
     if(is_saved){
         ui_alert();
@@ -146,6 +170,7 @@ bool save_function(){
 
     }
 
+    editor_draw_cursor();
     return true;
 }
 // #endregion
