@@ -52,12 +52,22 @@ void nt_configure_term_env(){
     attribute.c_cflag |= (CS8);
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &attribute);
 
-    //switch to the alternate screen buffer mode.
+    /*
+        Enable mouse tracking for prevent scroiling in the console.
+
+        About XTerm Control Sequences:
+        https://invisible-island.net/xterm/ctlseqs/ctlseqs.html
+    */
+
+    //1049h: Saving the cursor, switch to the Alternate Screen Buffer.
+    //1000h: Enable Mouse Tracking.
     printf("\x1b[?1049h\x1b[?1000h");
 }
 
 void nt_restore_term_env(){
-    printf("\x1b[?1049l\x1b[?1003l");
+    //1049l: Use Normal Screen Buffer and restore cursor.
+    //1000l: Disable Mouse Tracking.
+    printf("\x1b[?1049l\x1b[?1000l");
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &default_attribute);
 
     puts("");
