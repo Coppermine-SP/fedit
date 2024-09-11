@@ -22,7 +22,6 @@
 #define HOME_KEY 71
 #define END_KEY 79
 
-
 terminal_size_t nt_get_terminal_size(){
     CONSOLE_SCREEN_BUFFER_INFO info;
     terminal_size_t result;
@@ -35,15 +34,29 @@ terminal_size_t nt_get_terminal_size(){
 
 void nt_configure_term_env(){
     HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
-    DWORD dw_mode = 0;
-    terminal_size_t size = nt_get_terminal_size();
+    DWORD dw_mode;
 
     GetConsoleMode(handle, &dw_mode);
     dw_mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
     SetConsoleMode(handle, dw_mode);
 
-    //switch to the alternate screen buffer mode.
-    printf("\033[?1049h\033[2J\033[H");
+    /*
+        There is no need to enable mouse tracking to intercept mouse wheel event in Win32.
+        In Windows Terminal, mouse wheel inputs are the same as up and down arrow keys.
+
+        About Windows Console Virtual Terminal Sequences:
+        https://learn.microsoft.com/en-us/windows/console/console-virtual-terminal-sequences
+    */
+
+    //1049h: Saving the cursor, switch to the Alternate Screen Buffer.
+    //2 SP q: Steady block cursor shape.
+    printf("\x1b[?1049h\x1b[2 q");
+}
+
+void nt_restore_term_env(){
+    //1049l: Use Normal Screen Buffer and restore cursor.
+    //0 SP q: Default cursor shape configured by the user.
+    printf("\x1b[?1049l\x1b[0 q");
 }
 
 enum key_type nt_get_raw_input(char* out){
@@ -60,6 +73,7 @@ enum key_type nt_get_raw_input(char* out){
                 return CONTROL_KEY;
             }
         }
+        //I love Windows so much. Windows is the best operating system in the world.
         else if(c == SPECIAL_KEY_BEGIN){
             char buf;
             if(nt_get_raw_input(&buf) == TIMEOUT) return TIMEOUT;
