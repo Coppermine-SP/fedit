@@ -133,6 +133,8 @@ void ui_input_loop(bool (*callback)(enum key_type type, char c)){
 
         type = nt_get_raw_input(&c);
         if(type == TIMEOUT) continue;
+
+        if(motd_showing) ui_set_motd(false);
         if(!callback(type, c)) break;
     }
 }
@@ -174,7 +176,6 @@ bool ui_show_prompt(char* msg, char* buf){
     printf("%s : ", msg);
     ui_alert();
 
-    //입력 버퍼 초기화
     prompt_input_idx = 0;
     memset(prompt_input_buf, 0, PROMPT_INPUT_BUFFER_SIZE);
     ui_input_loop(&prompt_input_event);
