@@ -61,13 +61,15 @@ void nt_configure_term_env(){
 
     //1049h: Saving the cursor, switch to the Alternate Screen Buffer.
     //1000h: Enable Mouse Tracking.
-    printf("\x1b[?1049h\x1b[?1000h");
+    //7l: Disable Auto-Wrap Mode.
+    printf("\x1b[?1049h\x1b[?1000h\x1b[?7l");
 }
 
 void nt_restore_term_env(){
     //1049l: Use Normal Screen Buffer and restore cursor.
     //1000l: Disable Mouse Tracking.
-    printf("\x1b[?1049l\x1b[?1000l");
+    //7h: Enable Auto-Wrap Mode.
+    printf("\x1b[?1049l\x1b[?1000l\x1b[?7h");
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &default_attribute);
 
     puts("");
