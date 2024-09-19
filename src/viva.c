@@ -20,8 +20,13 @@
 static char* file_name;
 static bool is_saved = false;
 
-static unsigned x_pos = 0;
-static unsigned y_pos = 0;
+static int rel_pos = 0;
+static int base_pos = 0;
+static const char* screen_buf;
+static int buf_len;
+
+static int cols;
+static int rows;
 // #endregion
 
 // #region Function prototypes
@@ -30,11 +35,20 @@ bool find_function();
 bool save_function();
 
 void editor_cursor_move(enum key_type x);
+void editor_resize_event();
 void editor_draw();
+void editor_update();
 void editor_draw_cursor();
 void editor_quit();
 
 void signal_handler(int sig);
+// #endregion
+
+// #region Helper functions
+void update_terminal_size(){
+    ui_get_terminal_size(&cols, &rows);
+}
+
 // #endregion
 
 bool input_event(enum key_type type, char c)
@@ -44,6 +58,10 @@ bool input_event(enum key_type type, char c)
             if (c == CTRL_KEY('q')) return quit_function();
             else if (c == CTRL_KEY('f')) return find_function();
             else if (c == CTRL_KEY('s')) return save_function();
+            else{
+                ui_alert();
+                ui_show_default_message();
+            }
         }
         else if(type >= UP_ARROW) editor_cursor_move(type);
         else if(type == ENTER) printf("ENTER ");
@@ -63,9 +81,10 @@ int main(int argc, char *argv[])
 {
     file_name  = argc > 1 ? argv[1] : NULL;
     te_init(file_name);
-    ui_init();
+    ui_init(editor_resize_event);
     signal(SIGINT, signal_handler);
 
+    editor_update();
     editor_draw();
     if (argc == 1) ui_set_motd(true);
 
@@ -83,42 +102,72 @@ void signal_handler(int sig){
 // #region Editor functions
 void editor_cursor_move(enum key_type x){
     int cols, rows;
-    ui_get_terminal_size(&cols, 
-    &rows);
+    ui_get_terminal_size(&cols, &rows);
 
     if(x == UP_ARROW){
-        if(y_pos == 0) ui_alert();
-        else y_pos--;
-        
     }
     else if(x == DOWN_ARROW){
-        if(y_pos >= (rows-3)) ui_alert();
-        else y_pos++;
-
     }
     else if(x == LEFT_ARROW){
-        if(x_pos == 0) ui_alert();
-        else x_pos--;
+        if(rel_pos == 0) ui_alert();
+        else rel_pos--;
     }
     else{
-        if(x_pos >= cols) ui_alert();
-        else x_pos++;
+        if(false) ui_alert();
+        else rel_pos++;
     }
+
     editor_draw_cursor();
 }
 
 void editor_draw(){
-    ui_set_status((y_pos + 1), 0, file_name);
-    ui_draw_text(te_get_screen_buffer(), 0);
+    int len;
+    char* buf = te_get_buffer(&len);
+
+    ui_set_status(1, 0, file_name);
+    ui_draw_text(buf, len);
     editor_draw_cursor();
 }
 
 void editor_draw_cursor(){
+    int screen_pos = 0;
+    unsigned pad = cols;
+    for(int i = 0; i < rel_pos; i++){
+        char tmp = screen_buf[base_pos + i];
+        if(tmp == '\n'){
+            screen_pos += pad;
+            pad = cols;
+        }
+        else{
+            if(tmp == '\0') continue;
+            if(pad == 1) pad = cols;
+            else pad--;
+            
+            screen_pos++;
+        }
+    }
+
+    int x_pos = (screen_pos % cols);
+    int y_pos = (screen_pos / cols);
+
+    //화면 리사이징시 스크린 좌표가 영역을 벗어나지 않도록 방지
+    if(x_pos > cols || y_pos > rows){
+        rel_pos = 0;
+        x_pos = 0;
+        y_pos = 0;
+    }
+
     ui_cursor_move(x_pos, y_pos);
 }
 
 void editor_update(){
+    screen_buf = te_get_buffer(&buf_len);
+    update_terminal_size();
+}
 
+void editor_resize_event(){
+    update_terminal_size();
+    editor_draw();
 }
 
 void editor_quit(){
@@ -167,7 +216,17 @@ bool save_function(){
         ui_show_message("There is no local changes to save.");
     }
     else{
+        bool is_file_new = false;
+        if(file_name == NULL){
+            char buf[50];
+            ui_show_prompt("File Name: ", buf);
+            is_file_new = true;
+        }
 
+        char buf[100];
+        sprintf(buf, "\"%s\"%s %dL, %dB written.", file_name, (is_file_new ? "[New]" : ""), 7, 1280);
+        ui_show_message(buf);
+        
     }
 
     editor_draw_cursor();

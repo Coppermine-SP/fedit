@@ -12,7 +12,8 @@
 #include "termui_types.h"
 
 // #region Macro constants
-#define PROMPT_INPUT_BUFFER_SIZE 50
+#define PROMPT_INPUT_BUFFER_SIZE 100
+#define MESSAGE_BUFFER_SIZE 150
 // #endregion
 
 // #region Macro functions
@@ -37,6 +38,7 @@ static const char* subtitle_string = "Copyright (C) 2024 Coppermine-SP";
 // #endregion
 
 // #region Global variables
+static void (*resize_callback)();
 static terminal_size_t terminal_size;
 static status_t status;
 static bool motd_showing = false;
@@ -46,11 +48,14 @@ void ui_alert(){
     printf("\a");
 }
 
+static char message_buf[MESSAGE_BUFFER_SIZE];
 void ui_show_message(const char* msg){
     CURSOR_HIDE;
     CURSOR_GOTO(terminal_size.rows, 0);
     CLEAR_LINE;
-    printf("%s", msg);
+
+    if(msg != NULL)strcpy(message_buf, msg);
+    printf("%s", message_buf);
 }
 
 void ui_show_default_message(){
@@ -76,7 +81,7 @@ static bool get_file_type(char* const src, char* buf, int buf_len){
     return false;
 }
 
-static void render_status(){
+static void draw_status(){
     CURSOR_HIDE;
     COLOR_INVERT;
     CURSOR_GOTO(terminal_size.rows-1, 0);
@@ -123,7 +128,17 @@ void ui_set_status(int cursor_line, int total_lines, char* const file_name){
     status.file_name = file_name;
     status.total_lines = total_lines;
 
-    render_status();
+    draw_status();
+}
+
+void check_terminal_size(){
+    terminal_size_t size = nt_get_terminal_size();
+    if(size.cols != terminal_size.cols || size.rows != terminal_size.rows){
+        terminal_size = size;
+        if(motd_showing) ui_set_motd(false);
+        ui_show_message(NULL);
+        resize_callback();
+    }
 }
 
 void ui_input_loop(bool (*callback)(enum key_type type, char c)){
@@ -132,6 +147,7 @@ void ui_input_loop(bool (*callback)(enum key_type type, char c)){
         enum key_type type;
 
         type = nt_get_raw_input(&c);
+        check_terminal_size();
         if(type == TIMEOUT) continue;
 
         if(motd_showing) ui_set_motd(false);
@@ -139,45 +155,44 @@ void ui_input_loop(bool (*callback)(enum key_type type, char c)){
     }
 }
 
+static const char* prompt_msg;
 static char prompt_input_buf[PROMPT_INPUT_BUFFER_SIZE];
+static char prompt_message_buf[MESSAGE_BUFFER_SIZE];
 static int prompt_input_idx;
 static bool prompt_input_event(enum key_type type, char c){
     if(prompt_input_idx - 1 > PROMPT_INPUT_BUFFER_SIZE) return false;
 
-    if(type == CONTROL_KEY){
-        if(type == ESC){
-            prompt_input_buf[0] = '\0';
-            return false;
-        }
-        else if(type == ENTER){
-            prompt_input_buf[prompt_input_idx] = '\0';
-            return false;
-        }
-        else return true;
+    if(type == ESC){
+        prompt_input_buf[0] = '\0';
+        return false;
+    }
+    else if(type == ENTER){
+        prompt_input_buf[prompt_input_idx] = '\0';
+        return false;
+    }
+    else if(type == BACKSPACE){
+        if(prompt_input_idx == 0) return false;
+        prompt_input_buf[--prompt_input_idx] = '\0';
     }
     else if(type == NORMAL_KEY){
         prompt_input_buf[prompt_input_idx++] = c;
-        printf("%c", c);
-        return true;
     }
     else{
         return true;
     }
+
+    strcpy(prompt_message_buf, prompt_msg);
+    strcat(prompt_message_buf, prompt_input_buf);
+    ui_show_message(prompt_message_buf);
+    return true;
 }
 
-void ui_get_terminal_size(int* cols, int* rows){
-    if(cols != NULL) *cols = terminal_size.cols;
-    if(rows != NULL) *rows = terminal_size.rows;
-}
-
-bool ui_show_prompt(char* msg, char* buf){
-    CURSOR_GOTO(terminal_size.rows, 0);
-    CLEAR_LINE;
-    printf("%s : ", msg);
+bool ui_show_prompt(char* const msg, char* buf){
     ui_alert();
-
     prompt_input_idx = 0;
     memset(prompt_input_buf, 0, PROMPT_INPUT_BUFFER_SIZE);
+    prompt_msg = msg;
+    ui_show_message(msg);
     ui_input_loop(&prompt_input_event);
 
     ui_show_message(default_message_string);
@@ -198,7 +213,7 @@ void ui_draw_text(const char* screen_buf, int len){
         CURSOR_GOTO(i, 0);
 
         if((cur - screen_buf) < len){
-            for(int j = 0; j < terminal_size.cols - 2; j++){
+            for(int j = 0; j < terminal_size.cols; j++){
                 if((cur - screen_buf) >= len) break;
 
                 if(*cur == '\r' || *cur == '\0'){
@@ -219,6 +234,11 @@ void ui_draw_text(const char* screen_buf, int len){
     }
 }
 
+void ui_get_terminal_size(int* cols, int* rows){
+    if(cols != NULL) *cols = terminal_size.cols;
+    if(rows != NULL) *rows = terminal_size.rows;
+}
+
 void ui_cursor_move(unsigned x, unsigned y){
     if(x > terminal_size.cols || y > (terminal_size.rows -2)) return;
 
@@ -226,7 +246,8 @@ void ui_cursor_move(unsigned x, unsigned y){
     CURSOR_SHOW;
 }
 
-void ui_init(){
+void ui_init(void (*callback)(int cols, int rows)){
+    resize_callback = callback;
     setvbuf(stdout, NULL, _IONBF, 0);
     nt_configure_term_env();
     CLEAR_SCREEN;

@@ -12,7 +12,8 @@ typedef struct{
 } status_t;
 
 /// @brief TUI 환경을 초기화합니다.
-void ui_init();
+/// @param callback 리사이즈 이벤트 콜백
+void ui_init(void (*callback)());
 
 /// @brief 상태 바를 업데이트 합니다.
 /// @param cursor_line 
