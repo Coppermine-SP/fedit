@@ -49,6 +49,118 @@ void update_terminal_size(){
     ui_get_terminal_size(&cols, &rows);
 }
 
+int get_screen_pos(int base, int x){
+    int screen_pos = 0;
+    unsigned pad = cols;
+    for(int i = 0; i < x; i++){
+        char tmp = screen_buf[base + i];
+        if(tmp == '\n'){
+            screen_pos += pad;
+            pad = cols;
+        }
+        else{
+            if(tmp == '\0') continue;
+            if(pad == 1) pad = cols;
+            else pad--;
+            
+            screen_pos++;
+        }
+    }
+
+    return screen_pos;
+}
+
+// #endregion
+
+// #region Cursor functions
+void cursor_move_up(){
+    if(rel_pos == 0){
+        
+    }
+    else{
+        bool nextline = false;
+        for(int i = rel_pos-1; i >= -1; i--){
+            if((base_pos + i) < 0){
+                rel_pos = 0;
+            }
+            else if(screen_buf[base_pos + i] == '\n'){
+                if(nextline){
+                    rel_pos = i+1;
+                    return;
+                }
+                else nextline = true;
+            }
+        }
+    }
+    if(base_pos == 0)ui_alert();
+}
+
+void cursor_move_down(){
+    int next = rel_pos;
+    for(int i = next; i < (buf_len - base_pos); i++){
+        if(screen_buf[base_pos + i] == '\n'){
+            next = i+1;
+            break;
+        }
+    }
+    
+    if(next == rel_pos){
+        ui_alert();
+        return;
+    }
+
+    int base = base_pos;
+    int rel = next;
+    while(get_screen_pos(base, rel) > (cols*(rows-2))-1){
+        for(int i = base; i < buf_len; i++){
+            if(screen_buf[i] == '\n'){
+                base = i+1;
+                rel = next - (base - base_pos);
+                break;
+            }
+        }
+    }
+
+    base_pos = base;
+    rel_pos = rel;
+    editor_draw();
+}
+
+void cursor_move_left(){
+    if(rel_pos == 0){
+        if(base_pos == 0) ui_alert();
+        else{
+            //base_pos 한 행만큼 올리기
+        }
+        
+    }
+    else{
+        if(screen_buf[base_pos + rel_pos - 1] == '\n') ui_alert();
+        else rel_pos--;
+    }
+}
+
+void cursor_move_right(){
+    if((base_pos + rel_pos) >= buf_len || screen_buf[base_pos + rel_pos] == '\n'){
+        ui_alert();
+        return;
+    }
+
+    rel_pos++;
+}
+
+void cursor_home(){
+    base_pos = 0;
+    rel_pos = 0;
+    
+    editor_update();
+    editor_draw_cursor();
+}
+
+void cursor_end(){
+
+}
+
 // #endregion
 
 bool input_event(enum key_type type, char c)
@@ -64,12 +176,13 @@ bool input_event(enum key_type type, char c)
             }
         }
         else if(type >= UP_ARROW) editor_cursor_move(type);
+        else if(type == HOME) cursor_home();
+        else if(type == END) cursor_end();
         else if(type == ENTER) printf("ENTER ");
         else if(type == BACKSPACE) printf("BACKSPACE ");
         else if(type == PGUP) printf("PGUP ");
         else if(type == PGDOWN) printf("PGDOWN ");
-        else if(type == HOME) printf("HOME ");
-        else if(type == END) printf("END ");
+
     }
     else{
         printf("%c", c);
@@ -77,6 +190,14 @@ bool input_event(enum key_type type, char c)
     return true;
 }
 
+void signal_handler(int sig){
+    if(sig == SIGINT){
+        editor_quit();
+        exit(0);
+    }
+}
+
+// #region Entrypoint
 int main(int argc, char *argv[])
 {
     file_name  = argc > 1 ? argv[1] : NULL;
@@ -91,32 +212,17 @@ int main(int argc, char *argv[])
     ui_input_loop(input_event);
     editor_quit();
 }
-
-void signal_handler(int sig){
-    if(sig == SIGINT){
-        editor_quit();
-        exit(0);
-    }
-}
+// #endregion
 
 // #region Editor functions
 void editor_cursor_move(enum key_type x){
     int cols, rows;
     ui_get_terminal_size(&cols, &rows);
 
-    if(x == UP_ARROW){
-    }
-    else if(x == DOWN_ARROW){
-    }
-    else if(x == LEFT_ARROW){
-        if(rel_pos == 0) ui_alert();
-        else rel_pos--;
-    }
-    else{
-        if(false) ui_alert();
-        else rel_pos++;
-    }
-
+    if(x == UP_ARROW) cursor_move_up();
+    else if(x == DOWN_ARROW) cursor_move_down();
+    else if(x == LEFT_ARROW) cursor_move_left();
+    else cursor_move_right();
     editor_draw_cursor();
 }
 
@@ -125,27 +231,16 @@ void editor_draw(){
     char* buf = te_get_buffer(&len);
 
     ui_set_status(1, 0, file_name);
-    ui_draw_text(buf, len);
+    ui_draw_text((char*)(buf + base_pos), (len - base_pos));
     editor_draw_cursor();
 }
 
 void editor_draw_cursor(){
-    int screen_pos = 0;
-    unsigned pad = cols;
-    for(int i = 0; i < rel_pos; i++){
-        char tmp = screen_buf[base_pos + i];
-        if(tmp == '\n'){
-            screen_pos += pad;
-            pad = cols;
-        }
-        else{
-            if(tmp == '\0') continue;
-            if(pad == 1) pad = cols;
-            else pad--;
-            
-            screen_pos++;
-        }
-    }
+    /*
+        매우 청명한 하늘입니다.
+        2024.09.13, KE643 (ICN => SIN)에서.
+    */
+    int screen_pos = get_screen_pos(base_pos, rel_pos);
 
     int x_pos = (screen_pos % cols);
     int y_pos = (screen_pos / cols);
