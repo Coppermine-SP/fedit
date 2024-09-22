@@ -50,13 +50,15 @@ void nt_configure_term_env(){
 
     //1049h: Saving the cursor, switch to the Alternate Screen Buffer.
     //2 SP q: Steady block cursor shape.
-    printf("\x1b[?1049h\x1b[2 q");
+    //7l: Disable Auto-Wrap Mode.
+    printf("\x1b[?1049h\x1b[2 q\x1b[?7l");
 }
 
 void nt_restore_term_env(){
     //1049l: Use Normal Screen Buffer and restore cursor.
     //0 SP q: Default cursor shape configured by the user.
-    printf("\x1b[?1049l\x1b[0 q");
+    //7h: Enable Auto-Wrap Mode.
+    printf("\x1b[?1049l\x1b[0 q\x1b[?7h");
 }
 
 enum key_type nt_get_raw_input(char* out){
