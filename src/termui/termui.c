@@ -14,6 +14,7 @@
 // #region Macro constants
 #define PROMPT_INPUT_BUFFER_SIZE 100
 #define MESSAGE_BUFFER_SIZE 150
+#define SCREEN_BUFFER_SIZE 10000
 // #endregion
 
 // #region Macro functions
@@ -39,6 +40,7 @@ static const char* subtitle_string = "Copyright (C) 2024 Coppermine-SP";
 
 // #region Global variables
 static void (*resize_callback)();
+static char* screen_buf = NULL;
 static terminal_size_t terminal_size;
 static status_t status;
 static bool motd_showing = false;
@@ -48,6 +50,7 @@ void ui_alert(){
     printf("\a");
 }
 
+// Message must be buffered. because message bar needs to be redrawn during a terminal resize.
 static char message_buf[MESSAGE_BUFFER_SIZE];
 void ui_show_message(const char* msg){
     CURSOR_HIDE;
@@ -155,7 +158,7 @@ void ui_input_loop(bool (*callback)(enum key_type type, char c)){
     }
 }
 
-static const char* prompt_msg;
+static char* prompt_msg;
 static char prompt_input_buf[PROMPT_INPUT_BUFFER_SIZE];
 static char prompt_message_buf[MESSAGE_BUFFER_SIZE];
 static int prompt_input_idx;
@@ -202,19 +205,21 @@ bool ui_show_prompt(char* const msg, char* buf){
     return true;
 }
 
-void ui_draw_text(const char* screen_buf, int len){
+void ui_draw_text(const char* begin, int len){
+    //Prevent screen flashing via stdout buffering
+    setvbuf(stdout, screen_buf, _IOFBF, terminal_size.rows * terminal_size.cols);
     CURSOR_HIDE;
     CURSOR_GOTO(terminal_size.rows-2, terminal_size.cols);
     CLEAR_UP;
     CURSOR_GOTO(0, 0);
     
-    const char* cur = screen_buf;
+    const char* cur = begin;
     for(int i = 1; i < terminal_size.rows - 1; i++){
         CURSOR_GOTO(i, 0);
 
-        if((cur - screen_buf) < len){
+        if((cur - begin) < len){
             for(int j = 0; j < terminal_size.cols; j++){
-                if((cur - screen_buf) >= len) break;
+                if((cur - begin) >= len) break;
 
                 if(*cur == '\r' || *cur == '\0'){
                     cur++;
@@ -232,6 +237,9 @@ void ui_draw_text(const char* screen_buf, int len){
             printf("~");
         }
     }
+
+    fflush(stdout);
+    setvbuf(stdout, NULL, _IONBF, 0);
 }
 
 void ui_get_terminal_size(int* cols, int* rows){
@@ -253,11 +261,13 @@ void ui_init(void (*callback)(int cols, int rows)){
     CLEAR_SCREEN;
 
     terminal_size = nt_get_terminal_size();
+    screen_buf = calloc(SCREEN_BUFFER_SIZE, sizeof(char));
     ui_show_message(default_message_string);
 }
 
 void ui_dispose(){
     CLEAR_SCREEN;
+    free(screen_buf);
     nt_restore_term_env();
 }
  
