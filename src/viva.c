@@ -75,7 +75,24 @@ int get_screen_pos(int base, int x){
 // #region Cursor functions
 void cursor_move_up(){
     if(rel_pos == 0){
-        
+        if(base_pos > 0){
+            bool nextline = false;
+            for(int i = base_pos-1; i >= 0; i--){
+                if(screen_buf[i] == '\n'){
+                    if(nextline){
+                        base_pos = i+1;
+                        rel_pos = 0;
+                        break;
+                    }
+                    else nextline = true;
+                }
+                else if(i == 0){
+                    base_pos = 0;
+                    rel_pos = 0;
+                }
+            }
+        }
+        else ui_alert();
     }
     else{
         bool nextline = false;
@@ -92,7 +109,8 @@ void cursor_move_up(){
             }
         }
     }
-    if(base_pos == 0)ui_alert();
+
+    editor_draw();
 }
 
 void cursor_move_down(){
