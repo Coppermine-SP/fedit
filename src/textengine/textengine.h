@@ -10,6 +10,6 @@ void te_init(const char* file_name);
 /// @brief 종료하기 위해 정리합니다.
 void te_dispose();
 
-const char* te_get_screen_buffer();
+const char* te_get_buffer(int* len);
 
 void gap_open();

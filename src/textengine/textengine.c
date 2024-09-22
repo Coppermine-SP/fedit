@@ -10,7 +10,7 @@
 #define GAP_SIZE 15
 
 static char* buf;
-static long buf_len;
+static int buf_len;
 
 static bool is_gap_open = false;
 static char* gap_begin;
@@ -39,7 +39,8 @@ void te_dispose(){
     
 }
 
-const char* te_get_screen_buffer(){
+const char* te_get_buffer(int* len){
+    *len = buf_len;
     return buf;
 }
 
