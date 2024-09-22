@@ -122,7 +122,10 @@ enum key_type nt_get_raw_input(char* out){
                             }
                             return TIMEOUT;
                         default:
-                            return TIMEOUT;
+                            //Discard all other function keys
+                            while(true){
+                                if(nt_get_raw_input(NULL) == TIMEOUT) break;
+                            }
                     }
                 }
                 else return ESC;
