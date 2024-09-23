@@ -5,6 +5,8 @@
 
 A simple TUI-based text editor.
 
+<img src="img/sample-1.png" style="width:70%">
+
 **Compatibility checked on:**
 |Compiler|Target|OS|Checked|
 |-|-|-|:-:|
@@ -13,9 +15,28 @@ A simple TUI-based text editor.
 |Microsoft Visual C++ 1936|arm64|Windows 11 Enterprise A64|🚧|
 |GCC 13.2.0|x86_64-w64-mingw32|Windows 11 Enterprise x64|🚧|
 
-### Features
+### Table of Content
+- [Features](#features)
+- [Requirements](#requirements)
+- [Project Status Tracker](#project-status-tracker)
+- [Technical Documentation](/doc/overview.md)
 
+## Features
+- 동적 화면 리사이징
+- 텍스트 수정
+- 방향 키, Home, End, PgUp, PgDn 키를 통한 커서 이동
+- 기존 파일 불러오기 및 저장
+- 탐색
 
+## Requirements
+- POSIX 호환 운영 체제 (Linux, macOS) 또는 Windows 10 1067 (Redstone 1) 이상의 운영 체제
+- GCC 또는 LLVM/Clang, Microsoft Visual C++ 컴파일러
+
+>[!WARNING]
+>
+> **Windows 환경에서 컴파일 할 경우에는 Windows SDK 설치가 필요합니다.**
+>
+> 이는 win32_native_termui.c가 Win32 API를 사용하기 때문입니다.
 
 ## Project Status Tracker
 
