@@ -19,7 +19,7 @@ A simple TUI-based text editor.
 - [Features](#features)
 - [Requirements](#requirements)
 - [Project Status Tracker](#project-status-tracker)
-- [Technical Documentation](/doc/overview.md)
+- [Technical Documentation](/doc/index.md)
 
 ## Features
 - 동적 화면 리사이징
