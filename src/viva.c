@@ -22,11 +22,15 @@ static bool is_saved = false;
 
 static int rel_pos = 0;
 static int base_pos = 0;
-static const char* screen_buf;
+static const char* buf;
 static int buf_len;
 
 static int cols;
 static int rows;
+// #endregion
+
+// #region Macro functions
+#define MAX_SCRREN_POS ((cols*(rows-2))-1)
 // #endregion
 
 // #region Function prototypes
@@ -36,8 +40,7 @@ bool save_function();
 
 void editor_cursor_move(enum key_type x);
 void editor_resize_event();
-void editor_draw();
-void editor_update();
+void editor_draw(bool force);
 void editor_draw_cursor();
 void editor_quit();
 
@@ -53,7 +56,7 @@ int get_screen_pos(int base, int x){
     int screen_pos = 0;
     unsigned pad = cols;
     for(int i = 0; i < x; i++){
-        char tmp = screen_buf[base + i];
+        char tmp = buf[base + i];
         if(tmp == '\n'){
             screen_pos += pad;
             pad = cols;
@@ -74,49 +77,38 @@ int get_screen_pos(int base, int x){
 
 // #region Cursor functions
 void cursor_move_up(){
-    if(rel_pos == 0){
-        if(base_pos > 0){
-            bool nextline = false;
-            for(int i = base_pos-1; i >= 0; i--){
-                if(screen_buf[i] == '\n'){
-                    if(nextline){
-                        base_pos = i+1;
-                        rel_pos = 0;
-                        break;
-                    }
-                    else nextline = true;
-                }
-                else if(i == 0){
-                    base_pos = 0;
-                    rel_pos = 0;
-                }
-            }
-        }
-        else ui_alert();
+    if(rel_pos == 0 && base_pos == 0){
+        ui_alert();
+        return;
     }
-    else{
-        bool nextline = false;
-        for(int i = rel_pos-1; i >= -1; i--){
-            if((base_pos + i) < 0){
-                rel_pos = 0;
-            }
-            else if(screen_buf[base_pos + i] == '\n'){
-                if(nextline){
-                    rel_pos = i+1;
-                    return;
-                }
-                else nextline = true;
-            }
+
+    bool nextline = false;
+    int i = rel_pos-1;
+    //상대 주소가 음수라는 것은, 기준 주소가 올라가야 한다는 것을 의미합니다.
+    while(base_pos + i > 0){
+        if(buf[base_pos + i--] == '\n'){
+            if(nextline) break;
+            else nextline = true;
         }
     }
 
-    editor_draw();
+    if(i <= 0){
+        if((base_pos + i == 0)){
+            rel_pos = 0;
+            base_pos = 0;
+        }
+        else{
+            rel_pos = 0;
+            base_pos += i+2;
+        }
+    }
+    else rel_pos = i+2;
 }
 
 void cursor_move_down(){
     int next = rel_pos;
     for(int i = next; i < (buf_len - base_pos); i++){
-        if(screen_buf[base_pos + i] == '\n'){
+        if(buf[base_pos + i] == '\n'){
             next = i+1;
             break;
         }
@@ -129,9 +121,9 @@ void cursor_move_down(){
 
     int base = base_pos;
     int rel = next;
-    while(get_screen_pos(base, rel) > (cols*(rows-2))-1){
+    while(get_screen_pos(base, rel) > MAX_SCRREN_POS) {
         for(int i = base; i < buf_len; i++){
-            if(screen_buf[i] == '\n'){
+            if(buf[i] == '\n'){
                 base = i+1;
                 rel = next - (base - base_pos);
                 break;
@@ -141,44 +133,98 @@ void cursor_move_down(){
 
     base_pos = base;
     rel_pos = rel;
-    editor_draw();
 }
 
 void cursor_move_left(){
     if(rel_pos == 0){
         if(base_pos == 0) ui_alert();
         else{
-            //base_pos 한 행만큼 올리기
+            int i;
+            for(i = 0; i < cols; i++)
+                if(buf[base_pos-i] == '\n') break;
+
+            base_pos -= i;
+            rel_pos -= i;
         }
-        
     }
     else{
-        if(screen_buf[base_pos + rel_pos - 1] == '\n') ui_alert();
+        if(buf[base_pos + rel_pos - 1] == '\n') ui_alert();
         else rel_pos--;
     }
 }
 
 void cursor_move_right(){
-    if((base_pos + rel_pos) >= buf_len || screen_buf[base_pos + rel_pos] == '\n'){
+    if((base_pos + rel_pos) >= buf_len || buf[base_pos + rel_pos+1] == '\n'){
         ui_alert();
         return;
     }
 
-    rel_pos++;
+    int next = rel_pos+1;
+    if(get_screen_pos(base_pos, next) > MAX_SCRREN_POS){
+        int i;
+        for(i = 0; i < cols; i++) if(buf[base_pos + i] == '\n') break;
+        base_pos += i+1;
+        next -= i;
+    }
+    
+    rel_pos = next;
 }
 
 void cursor_home(){
-    base_pos = 0;
-    rel_pos = 0;
-    
-    editor_update();
-    editor_draw_cursor();
+    if(buf[base_pos + rel_pos] == '\n') return;
+
+    int i = rel_pos;
+    while(base_pos + i > 0){
+        if(buf[base_pos + i--] == '\n') break;
+    }
+
+    if(i <= 0){
+        if((base_pos + i == 0)){
+            rel_pos = 0;
+            base_pos = 0;
+        }
+        else{
+            rel_pos = 0;
+            base_pos += i+2;
+        }
+    }
+    else rel_pos = i+2;
+
+    editor_draw(false);
 }
 
 void cursor_end(){
+    if(buf[base_pos + rel_pos] == '\n') return;
+    
+    int next = rel_pos;
+    for(int i = next; i < (buf_len - base_pos); i++){
+        if(buf[base_pos + i] == '\n'){
+            next = i-1;
+            break;
+        }
+    }
+    
+    if(next == rel_pos){
+        ui_alert();
+        return;
+    }
 
+    int base = base_pos;
+    int rel = next;
+    while(get_screen_pos(base, rel) > MAX_SCRREN_POS) {
+        for(int i = base; i < buf_len; i++){
+            if(buf[i] == '\n'){
+                base = i+1;
+                rel = next - (base - base_pos);
+                break;
+            }
+        }
+    }
+
+    base_pos = base;
+    rel_pos = rel;
+    editor_draw(false);
 }
-
 // #endregion
 
 bool input_event(enum key_type type, char c)
@@ -223,8 +269,8 @@ int main(int argc, char *argv[])
     ui_init(editor_resize_event);
     signal(SIGINT, signal_handler);
 
-    editor_update();
-    editor_draw();
+    update_terminal_size();
+    editor_draw(true);
     if (argc == 1) ui_set_motd(true);
 
     ui_input_loop(input_event);
@@ -234,22 +280,26 @@ int main(int argc, char *argv[])
 
 // #region Editor functions
 void editor_cursor_move(enum key_type x){
-    int cols, rows;
-    ui_get_terminal_size(&cols, &rows);
-
     if(x == UP_ARROW) cursor_move_up();
     else if(x == DOWN_ARROW) cursor_move_down();
     else if(x == LEFT_ARROW) cursor_move_left();
     else cursor_move_right();
-    editor_draw_cursor();
+
+    editor_draw(false);
 }
 
-void editor_draw(){
-    int len;
-    char* buf = te_get_buffer(&len);
+void editor_draw(bool force){
+    static int last_base_pos;
+    static int last_len;
 
+    buf = te_get_buffer(&buf_len);
     ui_set_status(1, 0, file_name);
-    ui_draw_text((char*)(buf + base_pos), (len - base_pos));
+
+    if((last_base_pos != base_pos) || (last_len != buf_len) || force)
+        ui_draw_text((char*)(buf + base_pos), (buf_len - base_pos));
+    last_base_pos = base_pos;
+    last_len = buf_len;
+
     editor_draw_cursor();
 }
 
@@ -273,14 +323,9 @@ void editor_draw_cursor(){
     ui_cursor_move(x_pos, y_pos);
 }
 
-void editor_update(){
-    screen_buf = te_get_buffer(&buf_len);
-    update_terminal_size();
-}
-
 void editor_resize_event(){
     update_terminal_size();
-    editor_draw();
+    editor_draw(true);
 }
 
 void editor_quit(){
@@ -336,9 +381,9 @@ bool save_function(){
             is_file_new = true;
         }
 
-        char buf[100];
-        sprintf(buf, "\"%s\"%s %dL, %dB written.", file_name, (is_file_new ? "[New]" : ""), 7, 1280);
-        ui_show_message(buf);
+        char str_buf[100];
+        sprintf(str_buf, "\"%s\"%s %dL, %dB written.", file_name, (is_file_new ? "[New]" : ""), 7, 1280);
+        ui_show_message(str_buf);
         
     }
 
