@@ -117,15 +117,12 @@ enum key_type nt_get_raw_input(char* out){
                             }
                             return ESC;
                         case MOUSE_POS:
-                            for(int i = 0; i < 6; i++){
-                                if(nt_get_raw_input(NULL) == TIMEOUT) break;
-                            }
+                            for(int i = 0; i < 6; i++) if(nt_get_raw_input(NULL) == TIMEOUT) break;
                             return TIMEOUT;
                         default:
                             //Discard all other function keys
-                            while(true){
-                                if(nt_get_raw_input(NULL) == TIMEOUT) break;
-                            }
+                            while(true) if(nt_get_raw_input(NULL) == TIMEOUT) break;
+                            return TIMEOUT;
                     }
                 }
                 else return ESC;
