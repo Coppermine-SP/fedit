@@ -1,6 +1,7 @@
 /*
  *   viva.c - fedit <2024-2 Advanced Data Structure>
  *   Copyright (C) 2024 Coppermine-SP (copperminesp@cloudint.corp) - <창원대학교 컴퓨터공학과 20233063 손유찬>
+ * 
  *   See this repository from GitHub: https://github.com/Coppermine-SP/fedit
  */
 
@@ -83,7 +84,7 @@ void cursor_move_up(){
 
     bool nextline = false;
     int i = rel_pos-1;
-    //상대 주소가 음수라는 것은, 기준 주소가 올라가야 한다는 것을 의미합니다.
+    //상대 주소가 음수이면, 기준 주소를 상대 주소만큼 빼고, 상대 주소를 0으로 합니다.
     while(base_pos + i > 0){
         if(buf[base_pos + i--] == '\n'){
             if(nextline) break;
@@ -153,7 +154,7 @@ void cursor_move_left(){
 }
 
 void cursor_move_right(){
-    if((base_pos + rel_pos) >= buf_len-1 || buf[base_pos + rel_pos+1] == '\n'){
+    if((base_pos + rel_pos) >= buf_len-1 || buf[base_pos + rel_pos] == '\n'){
         ui_alert();
         return;
     }
@@ -204,7 +205,7 @@ void cursor_end(){
     int base = base_pos;
     for(int i = next; i <= (buf_len - base_pos); i++){
         if(buf[base_pos + i] == '\n' || (base_pos + i) == buf_len){
-            next = i-1;
+            next = i;
             break;
         }
     }
