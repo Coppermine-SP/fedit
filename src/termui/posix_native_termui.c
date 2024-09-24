@@ -142,9 +142,7 @@ enum key_type nt_get_raw_input(char* out){
             return NORMAL_KEY;
         }
     }
-    else{
-        return TIMEOUT;
-    }
+    else return TIMEOUT;
 }
 
 #endif
