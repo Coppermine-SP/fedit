@@ -1,4 +1,4 @@
-## II. 모듈 설계 - termui, native_termui
+## II. termui, native_termui 모듈 설계
 
 ### A. 모듈 개요
 termui모듈은 ANSI 이스케이프 시퀀스를 사용하여 TUI 환경을 구축하고, 사용자 키 입력을 핸들링한다. ANSI Escape Sequences(ANSI X3.64)는 비디오 터미널이나 터미널 에뮬레이터에서 커서의 위치, 색상, 폰트 스타일과 같은 것들을 제어하기 위한 표준이다.
