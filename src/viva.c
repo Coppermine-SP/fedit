@@ -72,7 +72,6 @@ int get_screen_pos(int base, int x){
 
     return screen_pos;
 }
-
 // #endregion
 
 // #region Cursor functions
@@ -154,7 +153,7 @@ void cursor_move_left(){
 }
 
 void cursor_move_right(){
-    if((base_pos + rel_pos) >= buf_len || buf[base_pos + rel_pos+1] == '\n'){
+    if((base_pos + rel_pos) >= buf_len-1 || buf[base_pos + rel_pos+1] == '\n'){
         ui_alert();
         return;
     }
@@ -162,8 +161,13 @@ void cursor_move_right(){
     int next = rel_pos+1;
     if(get_screen_pos(base_pos, next) > MAX_SCRREN_POS){
         int i;
-        for(i = 0; i < cols; i++) if(buf[base_pos + i] == '\n') break;
-        base_pos += i+1;
+        for(i = 0; i < cols; i++) 
+            if(buf[base_pos + i] == '\n'){
+                i++;
+                break;
+            }
+        
+        base_pos += i;
         next -= i;
     }
     
@@ -195,10 +199,11 @@ void cursor_home(){
 
 void cursor_end(){
     if(buf[base_pos + rel_pos] == '\n') return;
-    
+
     int next = rel_pos;
-    for(int i = next; i < (buf_len - base_pos); i++){
-        if(buf[base_pos + i] == '\n'){
+    int base = base_pos;
+    for(int i = next; i <= (buf_len - base_pos); i++){
+        if(buf[base_pos + i] == '\n' || (base_pos + i) == buf_len){
             next = i-1;
             break;
         }
@@ -209,20 +214,47 @@ void cursor_end(){
         return;
     }
 
-    int base = base_pos;
-    int rel = next;
-    while(get_screen_pos(base, rel) > MAX_SCRREN_POS) {
-        for(int i = base; i < buf_len; i++){
-            if(buf[i] == '\n'){
-                base = i+1;
-                rel = next - (base - base_pos);
+    //스크린 위치가 최대 스크린 위치를 초과한 경우에, 기준 위치를 스크린 기준으로 내립니다.
+    while(get_screen_pos(base, next) > MAX_SCRREN_POS){
+        int i;
+        for(i = 0; i < cols; i++) 
+            if(buf[base + i] == '\n'){
+                i++;
                 break;
             }
-        }
+        base += i;
+        next -= i;
     }
 
     base_pos = base;
-    rel_pos = rel;
+    rel_pos = next;
+    editor_draw(false);
+}
+
+void cursor_pgup(){
+}
+
+void cursor_pgdown(){
+    int next = base_pos;
+    while(get_screen_pos(base_pos, next - base_pos) < MAX_SCRREN_POS){
+        for(int i = 0; next+i <= buf_len; i++){
+            if(buf[next + i] == '\n'){
+                next += i+1;
+                break;
+            }
+            else if(next+i == buf_len) goto out;     
+        }
+    }
+
+    //There is no better way than goto to exit a nested loops.
+    out:
+    if(next == base_pos){
+        ui_alert();
+        return;
+    }
+
+    base_pos = next;
+    rel_pos = 0;
     editor_draw(false);
 }
 // #endregion
@@ -242,10 +274,11 @@ bool input_event(enum key_type type, char c)
         else if(type >= UP_ARROW) editor_cursor_move(type);
         else if(type == HOME) cursor_home();
         else if(type == END) cursor_end();
+        else if(type == PGUP) cursor_pgup();
+        else if(type == PGDOWN) cursor_pgdown();
         else if(type == ENTER) printf("ENTER ");
         else if(type == BACKSPACE) printf("BACKSPACE ");
-        else if(type == PGUP) printf("PGUP ");
-        else if(type == PGDOWN) printf("PGDOWN ");
+
 
     }
     else{
@@ -363,7 +396,9 @@ bool quit_function()
 
 // #region Find
 bool find_function(){
-    return false;
+    ui_show_prompt("Find: ", NULL);
+
+    return true;
 }
 // #endregion
 
