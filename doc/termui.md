@@ -70,10 +70,20 @@ Windows에서 상단 화살표 키는 다음 값의 조합으로 입력된다: 2
 
 ### D. 프롬프트
 <p align="center">
-<img src="https://github.com/user-attachments/assets/a96ab431-ede9-4cab-8df0-b2a2f42dfe57" style="width:70%">
+<img src="https://github.com/user-attachments/assets/3f96cad5-ebb5-4761-8269-94dc461bdabe" style="width:60%">
 </p>
 <p align="center">Figure II: 사용자에게 입력을 받는 프롬프트</p>
+</br>
 
 프롬프트는 하단 메시지 바에 표시되며, 사용자로부터 스트링을 입력 받을 때 `ui_show_prompt()` 함수를 통해 호출한다. 이는 사용자가 입력한 스트링을 반환한다. 
 즉 텍스트 검색 기능과 같은 것은 내부적으로 `ui_show_prompt()` 함수를 통해 사용자로부터 스트링 입력을 받아 이를 처리하게 되는 것이다.
+
+# 
+
+### E. 동적 화면 리사이징
+`SIGWINCH` 시그널을 시그널 핸들러로 받아 이때 화면을 리사이징 하는 것을 고려하였지만, 시그널 핸들러는 메인 스레드에서 소프트웨어 인터럽트로 동작한다. 즉, Asynchronous 하다는 것이다. 이 때문에 시그널 핸들러에서는 async-signal safe한 함수만 실행해야 하는데, UI를 그리기 위한 대부분의 함수는 그렇지 않다. (대표적으로 `printf()`는 async-signal safe하지 않다.) 
+
+이러한 이유로 인해 async-signal safe한 이벤트 큐를 만들고, 시그널 핸들러에서 큐에 이벤트를 넣으면 인터럽트가 끝난 다음에 `ui_input_loop()`에서 처리하는 마치 Windows 커널 모드 드라이버 아키텍쳐의 DPC (Deferred Procedure Call)와 유사한 구조가 필요하다. 이는 구현이 과도하게 복잡하다. 또한 Win32에서는 `SIGWINCH` 시그널을 지원하지 않기 때문에 이 방법은 사용할 수 없다.
+
+그래서 `ui_input_loop()`에서 I/O 요청을 보낸 다음 터미널 크기를 확인하여 현재 터미널 사이즈 구조체와 크기를 비교하고, 만약 터미널 사이즈가 다르다면 콜백 함수를 호출하여 이를 통지한다. 이 방법을 이용하면 아주 단순한 구현으로 터미널 크기 변화를 동기적으로 처리 할 수 있다. 
 
