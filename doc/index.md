@@ -18,19 +18,19 @@ fedit는 TUI 기반의 다중 플랫폼 (Windows, Linux, macOS)를 지원하는 
 ## Table of Content
 - [I. 개요 (Overview)](overview.md)
   
-- [II. termui, native_termui 모듈]()
+- [II. termui, native_termui 모듈 설계](termui.md)
     - A. 모듈 개요
     - B. 사용자 인터페이스 구축
     - C. 사용자 입력 핸들링
     - D. 프롬프트
     - E. 동적 화면 리사이징
     
-- [III. textengine 모듈]()
+- [III. textengine 모듈 설계](textengine.md)
     - A. 모듈 개요
     - B. 내부 자료 구조
     - C. 문자 삽입과 삭제
     
-- [IV. 기능 구현]()
+- [IV. 기능 설계](features.md)
     - A. 기능 개요
     - B. 커서 표시와 위치 체계
     - C. 커서 이동
