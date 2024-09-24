@@ -5,7 +5,9 @@
 
 A simple TUI-based text editor.
 
-<img src="img/sample-1.png" style="width:70%">
+<p align="center">
+<img src="img/sample-1.png" style="width:80%">
+</p>
 
 **Compatibility checked on:**
 |Compiler|Target|OS|Checked|
