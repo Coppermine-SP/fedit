@@ -253,8 +253,8 @@ void cursor_pgup(){
 
     bool line = false;
     while(get_screen_pos(next, base_pos-next) < MAX_SCRREN_POS){
-        for(int i = 1; next-i >=0; i++){
-            if(next-i == 0){
+        for(int i = 1; next-i >=-1; i++){
+            if(next-i < 0){
                 next = -1;
                 goto out;
             }
