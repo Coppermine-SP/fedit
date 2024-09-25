@@ -163,6 +163,14 @@ static char prompt_input_buf[PROMPT_INPUT_BUFFER_SIZE];
 static char prompt_message_buf[MESSAGE_BUFFER_SIZE];
 static int prompt_input_idx;
 static bool prompt_input_event(enum key_type type, char c){
+    /*
+        I considered making this function to nested functions in ui_show_prompt()
+        to remove global variables for this prompt behavior and limit the visiblity of this function.
+
+        However, nested function are not part of the C standard; it is an extension in GNU C.
+        https://gcc.gnu.org/onlinedocs/gcc/Nested-Functions.html
+    */
+
     if(prompt_input_idx - 1 > PROMPT_INPUT_BUFFER_SIZE) return false;
 
     if(type == ESC){
