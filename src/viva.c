@@ -176,7 +176,10 @@ void cursor_move_right(){
 }
 
 void cursor_home(){
-    if(buf[base_pos + rel_pos] == '\n') return;
+    if(buf[base_pos + rel_pos] == '\n'){
+        if(rel_pos > 0 && buf[base_pos + rel_pos - 1] != '\n') rel_pos--;
+        else return;
+    }
 
     int i = rel_pos;
     while(base_pos + i > 0){
@@ -233,6 +236,47 @@ void cursor_end(){
 }
 
 void cursor_pgup(){
+    if(base_pos == 0){
+        ui_alert();
+        return;
+    }
+
+    //기준 위치를 텍스트 기준 행으로 설정
+    int next = base_pos-1;
+    if(buf[next] != '\n'){
+        int i = 0;
+        while(next+i > 0){
+            if(buf[next + i--] == '\n') break;
+        }
+        next += i;
+    }
+
+    bool line = false;
+    while(get_screen_pos(next, base_pos-next) < MAX_SCRREN_POS){
+        for(int i = 1; next-i >=0; i++){
+            if(next-i == 0){
+                next = -1;
+                goto out;
+            }
+
+            if(buf[next - i] == '\n'){
+                next -= i;
+                break;
+            }
+
+        }
+    }
+
+    //There is no better way than using a goto statement to exit a nested loops.
+    out:
+    if(next == base_pos){
+        ui_alert();
+        return;
+    }
+
+    base_pos = next+1;
+    rel_pos = 0;
+    editor_draw(false);
 }
 
 void cursor_pgdown(){
@@ -247,7 +291,6 @@ void cursor_pgdown(){
         }
     }
 
-    //There is no better way than goto to exit a nested loops.
     out:
     if(next == base_pos){
         ui_alert();
@@ -296,8 +339,7 @@ void signal_handler(int sig){
 }
 
 // #region Entrypoint
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]){
     file_name  = argc > 1 ? argv[1] : NULL;
     te_init(file_name);
     ui_init(editor_resize_event);
