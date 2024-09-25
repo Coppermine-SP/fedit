@@ -281,7 +281,9 @@ void cursor_pgup(){
 
 void cursor_pgdown(){
     int next = base_pos;
+    int tmp;
     while(get_screen_pos(base_pos, next - base_pos) < MAX_SCRREN_POS){
+        tmp = next;
         for(int i = 0; next+i <= buf_len; i++){
             if(buf[next + i] == '\n'){
                 next += i+1;
@@ -292,6 +294,7 @@ void cursor_pgdown(){
     }
 
     out:
+    next = tmp;
     if(next == base_pos){
         ui_alert();
         return;
