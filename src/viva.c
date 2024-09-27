@@ -15,14 +15,17 @@
 
 // #region Macro constants
 #define MAX_FILE_NAME_SIZE 128
+#define LF '\n'
 // #endregion
 
 // #region Global variables
 static char* file_name;
 static bool is_saved = false;
+static int total_lines = 0;
 
 static int rel_pos = 0;
 static int base_pos = 0;
+
 static const char* buf;
 static int buf_len;
 
@@ -42,6 +45,8 @@ bool save_function();
 void editor_cursor_move(enum key_type x);
 void editor_resize_event();
 void editor_draw(bool force);
+void editor_insert(char x);
+void editor_delete();
 void editor_draw_cursor();
 void editor_quit();
 
@@ -58,7 +63,7 @@ int get_screen_pos(int base, int x){
     unsigned pad = cols;
     for(int i = 0; i < x; i++){
         char tmp = buf[base + i];
-        if(tmp == '\n'){
+        if(tmp == LF){
             screen_pos += pad;
             pad = cols;
         }
@@ -73,6 +78,26 @@ int get_screen_pos(int base, int x){
 
     return screen_pos;
 }
+
+int get_total_lines(){
+    int lines = 0;
+    for(int i = 0; i < buf_len; i++) if(buf[i] == LF) lines++;
+
+    if(lines == 0 && buf_len != 0) lines = 1;
+    return lines;
+}
+
+int get_base_lines(){
+    int lines = 1;
+    for(int i = 0; i <= base_pos; i++) if(buf[i] == LF) lines++;
+    return lines;
+}
+
+int get_rel_lines(){
+    int lines = 0;
+    for(int i = 0; i + base_pos < base_pos + rel_pos; i++) if(buf[base_pos + i] == LF) lines++;
+    return lines;
+}
 // #endregion
 
 // #region Cursor functions
@@ -86,7 +111,7 @@ void cursor_move_up(){
     int i = rel_pos-1;
     //상대 주소가 음수이면, 기준 주소를 상대 주소만큼 빼고, 상대 주소를 0으로 합니다.
     while(base_pos + i > 0){
-        if(buf[base_pos + i--] == '\n'){
+        if(buf[base_pos + i--] == LF){
             if(nextline) break;
             else nextline = true;
         }
@@ -108,7 +133,7 @@ void cursor_move_up(){
 void cursor_move_down(){
     int next = rel_pos;
     for(int i = next; i < (buf_len - base_pos); i++){
-        if(buf[base_pos + i] == '\n'){
+        if(buf[base_pos + i] == LF){
             next = i+1;
             break;
         }
@@ -123,7 +148,7 @@ void cursor_move_down(){
     int rel = next;
     while(get_screen_pos(base, rel) > MAX_SCRREN_POS) {
         for(int i = base; i < buf_len; i++){
-            if(buf[i] == '\n'){
+            if(buf[i] == LF){
                 base = i+1;
                 rel = next - (base - base_pos);
                 break;
@@ -141,20 +166,20 @@ void cursor_move_left(){
         else{
             int i;
             for(i = 0; i < cols; i++)
-                if(buf[base_pos-i] == '\n') break;
+                if(buf[base_pos-i] == LF) break;
 
             base_pos -= i;
             rel_pos -= i;
         }
     }
     else{
-        if(buf[base_pos + rel_pos - 1] == '\n') ui_alert();
+        if(buf[base_pos + rel_pos - 1] == LF) ui_alert();
         else rel_pos--;
     }
 }
 
 void cursor_move_right(){
-    if((base_pos + rel_pos) >= buf_len-1 || buf[base_pos + rel_pos] == '\n'){
+    if((base_pos + rel_pos) >= buf_len-1 || buf[base_pos + rel_pos] == LF){
         ui_alert();
         return;
     }
@@ -163,7 +188,7 @@ void cursor_move_right(){
     if(get_screen_pos(base_pos, next) > MAX_SCRREN_POS){
         int i;
         for(i = 0; i < cols; i++) 
-            if(buf[base_pos + i] == '\n'){
+            if(buf[base_pos + i] == LF){
                 i++;
                 break;
             }
@@ -176,14 +201,14 @@ void cursor_move_right(){
 }
 
 void cursor_home(){
-    if(buf[base_pos + rel_pos] == '\n'){
-        if(rel_pos > 0 && buf[base_pos + rel_pos - 1] != '\n') rel_pos--;
+    if(buf[base_pos + rel_pos] == LF){
+        if(rel_pos > 0 && buf[base_pos + rel_pos - 1] != LF) rel_pos--;
         else return;
     }
 
     int i = rel_pos;
     while(base_pos + i > 0){
-        if(buf[base_pos + i--] == '\n') break;
+        if(buf[base_pos + i--] == LF) break;
     }
 
     if(i <= 0){
@@ -202,12 +227,12 @@ void cursor_home(){
 }
 
 void cursor_end(){
-    if(buf[base_pos + rel_pos] == '\n') return;
+    if(buf[base_pos + rel_pos] == LF) return;
 
     int next = rel_pos;
     int base = base_pos;
     for(int i = next; i <= (buf_len - base_pos); i++){
-        if(buf[base_pos + i] == '\n' || (base_pos + i) == buf_len){
+        if(buf[base_pos + i] == LF || (base_pos + i) == buf_len){
             next = i;
             break;
         }
@@ -222,7 +247,7 @@ void cursor_end(){
     while(get_screen_pos(base, next) > MAX_SCRREN_POS){
         int i;
         for(i = 0; i < cols; i++) 
-            if(buf[base + i] == '\n'){
+            if(buf[base + i] == LF){
                 i++;
                 break;
             }
@@ -236,6 +261,7 @@ void cursor_end(){
 }
 
 void cursor_pgup(){
+    te_close_cursor();
     if(base_pos == 0){
         ui_alert();
         return;
@@ -243,10 +269,10 @@ void cursor_pgup(){
 
     //기준 위치를 텍스트 기준 행으로 설정
     int next = base_pos-1;
-    if(buf[next] != '\n'){
+    if(buf[next] != LF){
         int i = 0;
         while(next+i > 0){
-            if(buf[next + i--] == '\n') break;
+            if(buf[next + i--] == LF) break;
         }
         next += i;
     }
@@ -259,7 +285,7 @@ void cursor_pgup(){
                 goto out;
             }
 
-            if(buf[next - i] == '\n'){
+            if(buf[next - i] == LF){
                 next -= i;
                 break;
             }
@@ -280,12 +306,13 @@ void cursor_pgup(){
 }
 
 void cursor_pgdown(){
+    te_close_cursor();
     int next = base_pos;
     int tmp;
     while(get_screen_pos(base_pos, next - base_pos) < MAX_SCRREN_POS){
         tmp = next;
         for(int i = 0; next+i <= buf_len; i++){
-            if(buf[next + i] == '\n'){
+            if(buf[next + i] == LF){
                 next += i+1;
                 break;
             }
@@ -323,14 +350,14 @@ bool input_event(enum key_type type, char c)
         else if(type == END) cursor_end();
         else if(type == PGUP) cursor_pgup();
         else if(type == PGDOWN) cursor_pgdown();
-        else if(type == ENTER) printf("ENTER ");
+        else if(type == ENTER) editor_insert(LF);
         else if(type == BACKSPACE) printf("BACKSPACE ");
 
 
     }
-    else{
-        printf("%c", c);
-    }
+    else editor_insert(c);
+
+    te_set_cursor(base_pos + rel_pos);
     return true;
 }
 
@@ -344,7 +371,11 @@ void signal_handler(int sig){
 // #region Entrypoint
 int main(int argc, char *argv[]){
     file_name  = argc > 1 ? argv[1] : NULL;
+
     te_init(file_name);
+    buf = te_get_buffer(&buf_len);
+    total_lines = get_total_lines();
+
     ui_init(editor_resize_event);
     signal(SIGINT, signal_handler);
 
@@ -358,7 +389,21 @@ int main(int argc, char *argv[]){
 // #endregion
 
 // #region Editor functions
+void editor_insert(char x){
+    te_insert(x);
+    rel_pos++;
+
+    is_saved = false;
+    te_set_cursor(base_pos + rel_pos);
+    editor_draw(true);
+}
+
+void editor_delete(){
+
+}
+
 void editor_cursor_move(enum key_type x){
+    te_close_cursor();
     if(x == UP_ARROW) cursor_move_up();
     else if(x == DOWN_ARROW) cursor_move_down();
     else if(x == LEFT_ARROW) cursor_move_left();
@@ -368,15 +413,29 @@ void editor_cursor_move(enum key_type x){
 }
 
 void editor_draw(bool force){
-    static int last_base_pos;
+    static int last_basepos = -1;
+    static int last_relpos;
     static int last_len;
 
-    buf = te_get_buffer(&buf_len);
-    ui_set_status(1, 0, file_name);
+    static int base_lines;
+    static int rel_lines;
 
-    if((last_base_pos != base_pos) || (last_len != buf_len) || force)
+    /*
+        If the base position has not changed, there is no need to redraw entire editor area.
+        parameter force determines whether to redraw entire editor area even the base position has not changed. 
+        (e.g., text insertion, deletion and terminal resize event.)
+    */
+
+    buf = te_get_buffer(&buf_len);
+    if(last_basepos != base_pos) base_lines = get_base_lines();
+    if(last_relpos != rel_pos) rel_lines = get_rel_lines();
+
+    ui_set_status((base_lines + rel_lines), total_lines, file_name);
+
+    if((last_basepos != base_pos) || (last_len != buf_len) || force)
         ui_draw_text((char*)(buf + base_pos), (buf_len - base_pos));
-    last_base_pos = base_pos;
+    last_basepos = base_pos;
+    last_relpos = rel_pos;
     last_len = buf_len;
 
     editor_draw_cursor();

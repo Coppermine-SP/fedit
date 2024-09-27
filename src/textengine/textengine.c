@@ -2,18 +2,66 @@
 *   textengine.c - fedit <2024-2 Advanced Data Structure>
 *   Copyright (C) 2024 Coppermine-SP <창원대학교 컴퓨터공학과 20233063 손유찬>
 */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
 
+// #region Macro constants
 #define GAP_SIZE 15
+// #endregion
 
+// #region Global variables
 static char* buf;
 static int buf_len;
 
-static bool is_gap_open = false;
-static char* gap_begin;
+static int cursor_pos;
+static bool gap_opened = false;
+static int gap_begin;
+// #endregion
+
+// #region Internal functions
+void gap_open(){
+    buf = realloc(buf, buf_len + GAP_SIZE);
+
+    //갭 크기만큼 현재 커서에서 배열 시프트
+    memmove((buf + cursor_pos + GAP_SIZE), (buf + cursor_pos), (buf_len - cursor_pos));
+
+    //갭 공간 메모리 초기화
+    memset(buf + cursor_pos, 0, GAP_SIZE);
+    gap_begin = cursor_pos;
+    buf_len += GAP_SIZE;
+    gap_opened = true;
+}
+
+void gap_close(){
+    int delta = cursor_pos - gap_begin;
+
+    memmove((buf + gap_begin + delta), (buf + gap_begin + GAP_SIZE), (buf_len - GAP_SIZE + delta - cursor_pos));
+
+    gap_opened = false;
+}
+// #endregion
+
+void te_set_cursor(int pos){
+    cursor_pos = pos;
+}
+
+void te_insert(char x){
+    if(!gap_opened) gap_open();
+
+    buf[cursor_pos] = x;
+}
+
+void te_close_cursor(){
+    if(gap_opened) gap_close();
+}
+
+const char* te_get_buffer(int* len){
+    *len = buf_len;
+    return buf;
+}
 
 void te_init(char* const file_name){
     if(file_name != NULL){
@@ -26,35 +74,16 @@ void te_init(char* const file_name){
 
         buf = (char*)malloc(buf_len * sizeof(char));
         fread(buf, sizeof(char), buf_len, file);
+        fclose(file);
     }
     else{
         empty_file:
 
-        buf_len = 1;
+        buf_len = 0;
         buf = (char*)calloc(1, sizeof(char));
     }
 }
 
 void te_dispose(){
-    
-}
-
-const char* te_get_buffer(int* len){
-    *len = buf_len;
-    return buf;
-}
-
-void gap_open(){
-    if(!is_gap_open)
-    {
-        int cursor = 2;
-        buf = realloc(buf, buf_len + GAP_SIZE);
-
-        //갭 크기만큼 현재 커서에서 배열 시프트
-        memmove((buf + cursor + GAP_SIZE), (buf + cursor) , (buf_len - cursor));
-
-        //갭 공간 메모리 초기화
-        memset(buf + cursor, 0, GAP_SIZE);
-        is_gap_open = true;
-    }
+    free(buf);
 }
