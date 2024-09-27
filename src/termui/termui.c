@@ -2,6 +2,7 @@
 *   termui.c - fedit <2024-2 Advanced Data Structure>
 *   Copyright (C) 2024 Coppermine-SP <창원대학교 컴퓨터공학과 20233063 손유찬>
 */
+#define DEBUG_SHOW_EMPTY_SPACE
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -167,7 +168,7 @@ static bool prompt_input_event(enum key_type type, char c){
         I considered making this function to nested functions in ui_show_prompt()
         to remove global variables for this prompt behavior and limit the visiblity of this function.
 
-        However, nested function are not part of the C standard; it is an extension in GNU C.
+        However, nested functions are not part of the C standard; it is an extension in GNU C.
         https://gcc.gnu.org/onlinedocs/gcc/Nested-Functions.html
     */
 
@@ -188,10 +189,8 @@ static bool prompt_input_event(enum key_type type, char c){
     else if(type == NORMAL_KEY){
         prompt_input_buf[prompt_input_idx++] = c;
     }
-    else{
-        return true;
-    }
-
+    else return true;
+    
     strcpy(prompt_message_buf, prompt_msg);
     strcat(prompt_message_buf, prompt_input_buf);
     ui_show_message(prompt_message_buf);
@@ -229,21 +228,25 @@ void ui_draw_text(const char* begin, int len){
             for(int j = 0; j < terminal_size.cols; j++){
                 if((cur - begin) >= len) break;
 
-                if(*cur == '\r' || *cur == '\0'){
+                if(*cur == '\r' || *cur == 0){
                     cur++;
+
+                    #ifdef DEBUG_SHOW_EMPTY_SPACE
+                    if(*cur == 0){
+                        printf("_");
+                    }
+                    #endif
+
                     continue;
                 }
                 else if(*cur == '\n'){
                     cur++;
                     break;
                 }
-
                 printf("%c", *(cur++));
             }
         }
-        else{
-            printf("~");
-        }
+        else printf("~");  
     }
 
     fflush(stdout);
