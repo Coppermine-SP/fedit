@@ -37,9 +37,11 @@ void gap_open(){
 
 void gap_close(){
     int delta = cursor_pos - gap_begin;
+    int new_len = buf_len - GAP_SIZE + delta;
+    memmove((buf + gap_begin + delta), (buf + gap_begin + GAP_SIZE), (new_len - cursor_pos));
 
-    memmove((buf + gap_begin + delta), (buf + gap_begin + GAP_SIZE), (buf_len - GAP_SIZE + delta - cursor_pos));
-
+    buf = realloc(buf, new_len);
+    buf_len = new_len;
     gap_opened = false;
 }
 // #endregion
@@ -63,6 +65,10 @@ const char* te_get_buffer(int* len){
     return buf;
 }
 
+void te_buffer_save(char* const file_name){
+    
+}
+
 void te_init(char* const file_name){
     if(file_name != NULL){
         FILE* file = fopen(file_name, "r");
@@ -79,7 +85,7 @@ void te_init(char* const file_name){
     else{
         empty_file:
 
-        buf_len = 0;
+        buf_len = 1;
         buf = (char*)calloc(1, sizeof(char));
     }
 }
