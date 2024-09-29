@@ -89,6 +89,7 @@ static void draw_status(){
     CURSOR_HIDE;
     COLOR_INVERT;
     CURSOR_GOTO(terminal_size.rows-1, 0);
+    CLEAR_LINE;
 
     char left_buf[40];
     char right_buf[20];
@@ -103,7 +104,7 @@ static void draw_status(){
 
     printf("%s",left_buf);
     for(int i = 0; i < terminal_size.cols - (left + right); i++) printf(" ");
-    printf("%s", right_buf);
+    printf("%s ", right_buf);
     COLOR_NORMAL;
 }
 
