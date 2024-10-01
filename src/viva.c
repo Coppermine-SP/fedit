@@ -16,6 +16,7 @@
 // #region Macro constants
 #define MAX_FILE_NAME_SIZE 128
 #define LF '\n'
+#define TAB '\t'
 // #endregion
 
 // #region Global variables
@@ -68,8 +69,15 @@ int get_screen_pos(int base, int x){
             pad = cols;
         }
         else{
-            if(tmp == '\0') continue;
-            if(pad == 1) pad = cols;
+            if(tmp == 0) continue;
+            else if(tmp == TAB){
+                int tab_size = 8 - ((cols - pad) % 8);
+                pad -= tab_size;
+                screen_pos += tab_size;
+                continue;
+            }
+            
+            if(pad <= 1) pad = cols;
             else pad--;
             
             screen_pos++;
@@ -97,6 +105,24 @@ int get_rel_lines(){
     int lines = 0;
     for(int i = 0; i + base_pos < base_pos + rel_pos; i++) if(buf[base_pos + i] == LF) lines++;
     return lines;
+}
+
+void adjust_basepos_down(int* base, int* rel){
+    while(get_screen_pos(*base, *rel) > MAX_SCRREN_POS){
+        int i;
+        for(i = 0; i < cols; i++) 
+            if(buf[(*base) + i] == LF){
+                i++;
+                break;
+            }
+        
+        *base += i;
+        *rel -= i;
+    }
+}
+
+void adjust_basepos_up(){
+
 }
 // #endregion
 
@@ -185,18 +211,10 @@ void cursor_move_right(){
     }
 
     int next = rel_pos+1;
-    if(get_screen_pos(base_pos, next) > MAX_SCRREN_POS){
-        int i;
-        for(i = 0; i < cols; i++) 
-            if(buf[base_pos + i] == LF){
-                i++;
-                break;
-            }
-        
-        base_pos += i;
-        next -= i;
-    }
+    int base = base_pos;
+    adjust_basepos_down(&base, &next);
     
+    base_pos = base;
     rel_pos = next;
 }
 
@@ -243,17 +261,7 @@ void cursor_end(){
         return;
     }
 
-    //스크린 위치가 최대 스크린 위치를 초과한 경우에, 기준 위치를 스크린 기준으로 내립니다.
-    while(get_screen_pos(base, next) > MAX_SCRREN_POS){
-        int i;
-        for(i = 0; i < cols; i++) 
-            if(buf[base + i] == LF){
-                i++;
-                break;
-            }
-        base += i;
-        next -= i;
-    }
+    adjust_basepos_down(&base, &next);
 
     base_pos = base;
     rel_pos = next;
@@ -340,9 +348,11 @@ bool input_event(enum key_type type, char c)
             if (c == CTRL_KEY('q')) return quit_function();
             else if (c == CTRL_KEY('f')) return find_function();
             else if (c == CTRL_KEY('s')) return save_function();
+            else if (c == TAB) editor_insert(TAB);
             else{
                 ui_alert();
                 ui_show_default_message();
+                return true;
             }
         }
         else if(type >= UP_ARROW) editor_cursor_move(type);
@@ -351,7 +361,7 @@ bool input_event(enum key_type type, char c)
         else if(type == PGUP) cursor_pgup();
         else if(type == PGDOWN) cursor_pgdown();
         else if(type == ENTER) editor_insert(LF);
-        else if(type == BACKSPACE) printf("BACKSPACE ");
+        else if(type == BACKSPACE) editor_delete();
 
 
     }
@@ -409,7 +419,7 @@ void editor_cursor_move(enum key_type x){
     else if(x == LEFT_ARROW) cursor_move_left();
     else cursor_move_right();
 
-    editor_draw(false);
+    editor_draw(true);
 }
 
 void editor_draw(bool force){

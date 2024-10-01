@@ -222,12 +222,21 @@ void ui_draw_text(const char* begin, int len){
     CURSOR_GOTO(0, 0);
     
     const char* cur = begin;
+    int line_pos = 0;
+    int line_left = 0;
     for(int i = 1; i < terminal_size.rows - 1; i++){
         CURSOR_GOTO(i, 0);
 
         if((cur - begin) < len){
             for(int j = 0; j < terminal_size.cols; j++){
                 if((cur - begin) >= len) break;
+
+                if(line_left > 0){
+                    for(int k = 0; k < line_left; k++){
+                        printf(" ");
+                    }
+                    line_left = 0;
+                }
 
                 if(*cur == '\r' || *cur == 0){
                     cur++;
@@ -241,10 +250,30 @@ void ui_draw_text(const char* begin, int len){
                     continue;
                 }
                 else if(*cur == '\n'){
+                    line_pos = 0;
                     cur++;
                     break;
                 }
-                printf("%c", *(cur++));
+                else if(*cur == '\t'){
+                    int space = 8 - (line_pos % 8);
+                    line_pos += space;
+                    for(int k = 0; k < space; k++, j++){
+                        if(j >= terminal_size.cols){
+                            line_left = space - k;
+                            break;
+                        }
+                        else printf(" ");
+                        
+                    }
+
+                    j--;
+                    cur++;
+                }
+                else {
+                    printf("%c", *(cur++));
+                    line_pos++;
+                }
+
             }
         }
         else printf("~");  
