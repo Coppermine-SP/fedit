@@ -10,11 +10,13 @@
 
 // #region Macro constants
 #define GAP_SIZE 15
+#define MEMORY_EXPANSION_FACTOR 10
 // #endregion
 
 // #region Global variables
 static char* buf;
 static int buf_len;
+static int buf_high_watermark;
 
 static int cursor_pos;
 static bool gap_opened = false;
@@ -23,8 +25,11 @@ static int gap_begin;
 
 // #region Internal functions
 void gap_open(){
-    buf = realloc(buf, buf_len + GAP_SIZE);
-
+    if(buf_len + GAP_SIZE >= buf_high_watermark){
+        buf = realloc(buf, buf_len + (GAP_SIZE * MEMORY_EXPANSION_FACTOR));
+        buf_high_watermark = buf_len + (GAP_SIZE * MEMORY_EXPANSION_FACTOR);
+    }
+    
     //갭 크기만큼 현재 커서에서 배열 시프트
     memmove((buf + cursor_pos + GAP_SIZE), (buf + cursor_pos), (buf_len - cursor_pos));
 
@@ -40,7 +45,6 @@ void gap_close(){
     int new_len = buf_len - GAP_SIZE + delta;
     memmove((buf + gap_begin + delta), (buf + gap_begin + GAP_SIZE), (new_len - cursor_pos));
 
-    buf = realloc(buf, new_len);
     buf_len = new_len;
     gap_opened = false;
 }
@@ -53,7 +57,12 @@ void te_set_cursor(int pos){
 void te_insert(char x){
     if(!gap_opened) gap_open();
 
+    if(cursor_pos == (gap_begin + GAP_SIZE)) gap_open();
     buf[cursor_pos] = x;
+}
+
+void te_delete(){
+    
 }
 
 void te_close_cursor(){
@@ -96,6 +105,8 @@ void te_init(char* const file_name){
         buf_len = 1;
         buf = (char*)calloc(1, sizeof(char));
     }
+
+    buf_high_watermark = buf_len;
 }
 
 void te_dispose(){
