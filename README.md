@@ -6,7 +6,7 @@
 A simple TUI-based text editor.
 
 <p align="center">
-<img src="img/sample-1.png" style="width:80%">
+<img src="https://github.com/user-attachments/assets/1dfa04d7-8abb-4800-8fa6-ca8179a12cf6" style="width:70%">
 </p>
 
 **Compatibility checked on:**
@@ -48,10 +48,10 @@ A simple TUI-based text editor.
 |기본 터미널 환경 구축|native_termui|✅|새로운 파일 생성|textengine|✅|
 |문자 키 입력|native_termui|✅|기존 파일 열기|textengine|✅|
 |키 조합 및 특수 키 입력|native_termui|✅|텍스트 버퍼 보기|textengine|✅|
-|상태 바|termui|✅|텍스트 버퍼 저장|textengine|🚧|
-|메세지 바|termui|✅|문자 삽입|textengine|🚧|
+|상태 바|termui|✅|텍스트 버퍼 저장|textengine|✅|
+|메세지 바|termui|✅|문자 삽입|textengine|✅|
 |프롬프트|termui|✅|문자 삭제|textengine|🚧|
-|동적 화면 리사이징|termui|✅|갭 관리|textengine|🚧|
+|동적 화면 리사이징|termui|✅|갭 관리|textengine|✅|
 |편집 영역 텍스트 랜더링|termui|✅|
   
 ### 프로그램
@@ -62,6 +62,6 @@ A simple TUI-based text editor.
 |메시지 바|✅|
 |이동|✅|
 |텍스트 편집|🚧|
-|저장|🚧|
+|저장|✅|
 |탐색|🚧|
 |나가기|✅|
