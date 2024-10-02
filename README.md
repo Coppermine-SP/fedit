@@ -49,9 +49,9 @@ A simple TUI-based text editor.
 |문자 키 입력|native_termui|✅|기존 파일 열기|textengine|✅|
 |키 조합 및 특수 키 입력|native_termui|✅|텍스트 버퍼 보기|textengine|✅|
 |상태 바|termui|✅|텍스트 버퍼 저장|textengine|✅|
-|메세지 바|termui|✅|문자 삽입|textengine|🚧|
+|메세지 바|termui|✅|문자 삽입|textengine|✅|
 |프롬프트|termui|✅|문자 삭제|textengine|🚧|
-|동적 화면 리사이징|termui|✅|갭 관리|textengine|🚧|
+|동적 화면 리사이징|termui|✅|갭 관리|textengine|✅|
 |편집 영역 텍스트 랜더링|termui|✅|
   
 ### 프로그램
