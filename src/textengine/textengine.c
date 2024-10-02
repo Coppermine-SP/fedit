@@ -1,6 +1,6 @@
 /*
-*   textengine.c - fedit <2024-2 Advanced Data Structure>
-*   Copyright (C) 2024 Coppermine-SP <창원대학교 컴퓨터공학과 20233063 손유찬>
+    textengine.c - fedit <2024-2 Advanced Data Structure>
+    Copyright (C) 2024 Coppermine-SP <창원대학교 컴퓨터공학과 20233063 손유찬>
 */
 
 #include <stdio.h>
@@ -65,8 +65,16 @@ const char* te_get_buffer(int* len){
     return buf;
 }
 
-void te_buffer_save(char* const file_name){
-    
+bool te_buffer_save(char* const file_name){
+    FILE* file = fopen(file_name, "w+");
+
+    if(file == NULL) return false;
+    if(gap_opened) gap_close();
+
+    int written = fwrite(buf, sizeof(char), buf_len, file);
+    fclose(file);
+
+    return buf_len == written;
 }
 
 void te_init(char* const file_name){

@@ -1,8 +1,8 @@
 /*
- *   viva.c - fedit <2024-2 Advanced Data Structure>
- *   Copyright (C) 2024 Coppermine-SP (copperminesp@cloudint.corp) - <창원대학교 컴퓨터공학과 20233063 손유찬>
- * 
- *   See this repository from GitHub: https://github.com/Coppermine-SP/fedit
+    viva.c - fedit <2024-2 Advanced Data Structure>
+    Copyright (C) 2024 Coppermine-SP (copperminesp@cloudint.corp) - <창원대학교 컴퓨터공학과 20233063 손유찬>
+ 
+    See this repository from GitHub: https://github.com/Coppermine-SP/fedit
  */
 
 #include <stdlib.h>
@@ -21,7 +21,7 @@
 
 // #region Global variables
 static char* file_name;
-static bool is_saved = false;
+static bool is_saved = true;
 static int total_lines = 0;
 
 static int rel_pos = 0;
@@ -41,7 +41,7 @@ static int rows;
 // #region Function prototypes
 bool quit_function();
 bool find_function();
-bool save_function();
+bool save_function(bool force_new_file);
 
 void editor_cursor_move(enum key_type x);
 void editor_resize_event();
@@ -347,7 +347,8 @@ bool input_event(enum key_type type, char c)
         if(type == CONTROL_KEY){
             if (c == CTRL_KEY('q')) return quit_function();
             else if (c == CTRL_KEY('f')) return find_function();
-            else if (c == CTRL_KEY('s')) return save_function();
+            else if (c == CTRL_KEY('s')) return save_function(false);
+            else if(c == CTRL_KEY('n')) return save_function(true);
             else if (c == TAB) editor_insert(TAB);
             else{
                 ui_alert();
@@ -409,6 +410,7 @@ void editor_insert(char x){
 }
 
 void editor_delete(){
+    is_saved = false;
 
 }
 
@@ -518,23 +520,35 @@ bool find_function(){
 // #endregion
 
 // #region Save
-bool save_function(){
+bool save_function(bool force_new_file){
     if(is_saved){
         ui_alert();
         ui_show_message("There is no local changes to save.");
     }
     else{
-        bool is_file_new = false;
-        if(file_name == NULL){
+        bool is_new_file = false;
+        if(file_name == NULL || force_new_file){
             char buf[50];
-            ui_show_prompt("File Name: ", buf);
-            is_file_new = true;
+            if(!ui_show_prompt("New file name: ", buf)) return true;
+            is_new_file= true;
+            file_name = (char*)malloc(50 * sizeof(char));
+
+            if(file_name != NULL) free(file_name);
+            strcpy(file_name, buf);
+            editor_draw(false);
         }
 
         char str_buf[100];
-        sprintf(str_buf, "\"%s\"%s %dL, %dB written.", file_name, (is_file_new ? "[New]" : ""), 7, 1280);
-        ui_show_message(str_buf);
-        
+        if(te_buffer_save(file_name)){
+            sprintf(str_buf, "\"%s\"%s %dL, %dB written.", file_name, (is_new_file ? " [New] " : ""), total_lines, buf_len);
+            ui_show_message(str_buf);
+            is_saved = true;
+        }
+        else{
+            ui_alert();
+            ui_show_message("ERR_FILE_SAVE: Unable to write buffer to file.");
+            is_saved = false;
+        }
     }
 
     editor_draw_cursor();
