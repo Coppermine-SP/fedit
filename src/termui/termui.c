@@ -104,7 +104,7 @@ static void draw_status(){
     has_filetype = get_file_type(status.file_name, filetype_string, 15);
     
     int left = sprintf(left_buf,"[%s] - %d lines", (status.file_name == NULL ? default_file_name_string : status.file_name), status.total_lines);
-    int right = sprintf(right_buf,"%s | %d/%d",(has_filetype) ? filetype_string :default_file_type_string ,status.cursor_line, status.total_lines);
+    int right = sprintf(right_buf,"%s | %d/%d ",(has_filetype) ? filetype_string :default_file_type_string ,status.cursor_line, status.total_lines);
 
     printf("%s",left_buf);
     for(int i = 0; i < terminal_size.cols - (left + right); i++) printf(" ");
