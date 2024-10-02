@@ -1,7 +1,8 @@
 /*
-*   termui.c - fedit <2024-2 Advanced Data Structure>
-*   Copyright (C) 2024 Coppermine-SP <창원대학교 컴퓨터공학과 20233063 손유찬>
+    termui.c - fedit <2024-2 Advanced Data Structure>
+    Copyright (C) 2024 Coppermine-SP <창원대학교 컴퓨터공학과 20233063 손유찬>
 */
+
 #define DEBUG_SHOW_EMPTY_SPACE
 
 #include <stdio.h>
@@ -16,6 +17,7 @@
 #define PROMPT_INPUT_BUFFER_SIZE 100
 #define MESSAGE_BUFFER_SIZE 150
 #define SCREEN_BUFFER_SIZE 10000
+#define TAB_SPACE 8
 // #endregion
 
 // #region Macro functions
@@ -86,6 +88,8 @@ static bool get_file_type(char* const src, char* buf, int buf_len){
 }
 
 static void draw_status(){
+    //Prevent screen flashing via buffered stdout
+    setvbuf(stdout, screen_buf, _IOFBF, terminal_size.rows * terminal_size.cols);
     CURSOR_HIDE;
     COLOR_INVERT;
     CURSOR_GOTO(terminal_size.rows-1, 0);
@@ -106,6 +110,9 @@ static void draw_status(){
     for(int i = 0; i < terminal_size.cols - (left + right); i++) printf(" ");
     printf("%s ", right_buf);
     COLOR_NORMAL;
+
+    fflush(stdout);
+    setvbuf(stdout, NULL, _IONBF, 0);
 }
 
 void ui_set_motd(bool state){
@@ -172,7 +179,6 @@ static bool prompt_input_event(enum key_type type, char c){
         However, nested functions are not part of the C standard; it is an extension in GNU C.
         https://gcc.gnu.org/onlinedocs/gcc/Nested-Functions.html
     */
-
     if(prompt_input_idx - 1 > PROMPT_INPUT_BUFFER_SIZE) return false;
 
     if(type == ESC){
@@ -214,7 +220,7 @@ bool ui_show_prompt(char* const msg, char* buf){
 }
 
 void ui_draw_text(const char* begin, int len){
-    //Prevent screen flashing via stdout buffering
+    //Prevent screen flashing via buffered stdout
     setvbuf(stdout, screen_buf, _IOFBF, terminal_size.rows * terminal_size.cols);
     CURSOR_HIDE;
     CURSOR_GOTO(terminal_size.rows-2, terminal_size.cols);
@@ -232,9 +238,11 @@ void ui_draw_text(const char* begin, int len){
                 if((cur - begin) >= len) break;
 
                 if(line_left > 0){
-                    for(int k = 0; k < line_left; k++){
-                        printf(" ");
-                    }
+                    /*
+                       I don't like this tab spcaing behavior.
+                       There must be a more concise implementation, but i can't spend any more time on this.
+                    */
+                    for(int k = 0; k < line_left; k++) printf(" ");
                     line_left = 0;
                 }
 
@@ -255,7 +263,7 @@ void ui_draw_text(const char* begin, int len){
                     break;
                 }
                 else if(*cur == '\t'){
-                    int space = 8 - (line_pos % 8);
+                    int space = TAB_SPACE - (line_pos % TAB_SPACE);
                     line_pos += space;
                     for(int k = 0; k < space; k++, j++){
                         if(j >= terminal_size.cols){
