@@ -46,6 +46,9 @@ void nt_configure_term_env(){
     tcgetattr(STDIN_FILENO, &default_attribute);
     struct termios attribute = default_attribute;
 
+    cfmakeraw(&attribute);
+    attribute.c_cc[VMIN] = 0;
+    attribute.c_cc[VTIME] = 0;
     attribute.c_iflag &= ~(ICRNL | IXON | BRKINT | INPCK);
     attribute.c_oflag &= ~(OPOST);
     attribute.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
@@ -76,21 +79,9 @@ void nt_restore_term_env(){
 }
 
 enum key_type nt_get_raw_input(char* out){ 
-    struct timeval tv;
-    fd_set fds;
+    char c;
 
-    tv.tv_sec = 0;
-    tv.tv_usec = 100000;
-
-    FD_ZERO(&fds);
-    FD_SET(STDIN_FILENO, &fds);
-
-    int ret = select(STDIN_FILENO + 1, &fds, NULL, NULL, &tv);
-
-    if(ret > 0){
-        char c;
-        read(STDIN_FILENO, &c, 1);
-
+    if(read(STDIN_FILENO, &c, 1)){
         if(iscntrl(c)){
             if(c == ESC_KEY){
                 char buf[3];
