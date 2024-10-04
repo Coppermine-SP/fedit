@@ -421,6 +421,20 @@ void editor_delete(){
     te_set_cursor(abs_pos);
     te_delete();
 
+    if(rel_pos < 0){
+        int i;
+        for(i = 0; i < cols; i++){
+            if(base_pos-i == 0) break;
+            else if(buf[base_pos-i] == LF){
+                i--;
+                break;
+            }
+        }
+
+        base_pos -= i;
+        rel_pos = i-1;
+    }
+
     editor_draw(true);
 }
 
