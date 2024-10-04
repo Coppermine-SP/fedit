@@ -19,7 +19,7 @@
 #define SCREEN_BUFFER_SIZE 10000
 #define TAB_SPACE 8
 
-#define TITLE_STRING "fedit - Visual Text Editor"
+#define TITLE_STRING "Welcome to fedit (Visual Text Editor)."
 #define SUBTITLE_STRING "See this repository on GitHub: Coppermine-SP/fedit"
 #define COPYRIGHT_STRING "Copyright (C) 2024-2025 Coppermine-SP."
 #define DEFAULT_MESSAGE_STRING "HELP: Ctrl-S = Save | Ctrl-Q = Quit | Ctrl-F = Find"
