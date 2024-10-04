@@ -556,7 +556,7 @@ bool save_function(bool force_new_file){
         }
         else{
             ui_alert();
-            ui_show_message("ERR_FILE_SAVE: Unable to write buffer to file.");
+            ui_show_message("\x1b[1;31mERR_FILE_SAVE: Unable to write buffer to file.\x1b[0m");
             is_saved = false;
         }
     }
