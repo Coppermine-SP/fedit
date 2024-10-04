@@ -1,5 +1,4 @@
-/.DS_Store
-/test_files
+*/.DS_Store
 *.o
 viva
 viva.exe
