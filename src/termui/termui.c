@@ -58,7 +58,6 @@ void ui_show_message(const char* msg){
     CURSOR_HIDE;
     CURSOR_GOTO(terminal_size.rows, 0);
     CLEAR_LINE;
-
     if(msg != NULL)strcpy(message_buf, msg);
     printf("%s", message_buf);
 }
@@ -116,16 +115,16 @@ static void draw_status(){
 
 void ui_set_motd(bool state){
     CURSOR_HIDE;
-    CURSOR_GOTO((terminal_size.rows/2)-3, (terminal_size.cols - strlen(TITLE_STRING)) / 2);
+    CURSOR_GOTO((terminal_size.rows/2)-3, (int)(terminal_size.cols - strlen(TITLE_STRING)) / 2);
 
     if(state)printf("%s", TITLE_STRING);
     else CLEAR_LINE;
 
-    CURSOR_GOTO((terminal_size.rows/2)-1, (terminal_size.cols - strlen(SUBTITLE_STRING)) / 2);
+    CURSOR_GOTO((terminal_size.rows/2)-1, (int)(terminal_size.cols - strlen(SUBTITLE_STRING)) / 2);
     if(state)printf("%s", SUBTITLE_STRING);
     else CLEAR_LINE;
 
-    CURSOR_GOTO((terminal_size.rows/2), (terminal_size.cols - strlen(COPYRIGHT_STRING)) / 2);
+    CURSOR_GOTO((terminal_size.rows/2), (int)(terminal_size.cols - strlen(COPYRIGHT_STRING)) / 2);
     if(state)printf("%s", COPYRIGHT_STRING);
     else CLEAR_LINE;
     
