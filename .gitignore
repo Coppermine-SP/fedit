@@ -1,4 +1,8 @@
 */.DS_Store
+<<<<<<< HEAD
+=======
+/test_files
+>>>>>>> 45b97e7c470f98a2b289fbd10215c7683b4d998b
 *.o
 viva
 viva.exe
