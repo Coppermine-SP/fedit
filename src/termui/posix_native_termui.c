@@ -12,6 +12,7 @@
 #include <termios.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <fcntl.h>
 #include <ctype.h>
 
 #define CSI 91
@@ -43,6 +44,10 @@ terminal_size_t nt_get_terminal_size(){
 }
 
 void nt_configure_term_env(){
+    //Configuring stdin to using Non-Blocking I/O 
+    int stdin_flags = fcntl(STDIN_FILENO, F_GETFL, 0);
+    fcntl(STDIN_FILENO, F_SETFL, stdin_flags | O_NONBLOCK);
+
     tcgetattr(STDIN_FILENO, &default_attribute);
     struct termios attribute = default_attribute;
 
@@ -76,21 +81,9 @@ void nt_restore_term_env(){
 }
 
 enum key_type nt_get_raw_input(char* out){ 
-    struct timeval tv;
-    fd_set fds;
+    char c;
 
-    tv.tv_sec = 0;
-    tv.tv_usec = 100000;
-
-    FD_ZERO(&fds);
-    FD_SET(STDIN_FILENO, &fds);
-
-    int ret = select(STDIN_FILENO + 1, &fds, NULL, NULL, &tv);
-
-    if(ret > 0){
-        char c;
-        read(STDIN_FILENO, &c, 1);
-
+    if(read(STDIN_FILENO, &c, 1) > 0){
         if(iscntrl(c)){
             if(c == ESC_KEY){
                 char buf[3];
