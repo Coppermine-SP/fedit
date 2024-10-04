@@ -51,6 +51,7 @@ void gap_close(){
 // #endregion
 
 void te_set_cursor(int pos){
+    if(gap_opened && (pos < gap_begin || pos > (gap_begin + GAP_SIZE))) gap_close();
     cursor_pos = pos;
 }
 
@@ -62,7 +63,11 @@ void te_insert(char x){
 }
 
 void te_delete(){
-    
+    if(gap_opened && cursor_pos <= (gap_begin + GAP_SIZE)) buf[cursor_pos] = 0;
+    else{
+        memmove((buf + cursor_pos), (buf + cursor_pos + 1), (buf_len - cursor_pos-1));
+        buf_len--;
+    }
 }
 
 void te_close_cursor(){
@@ -102,7 +107,7 @@ void te_init(char* const file_name){
     else{
         empty_file:
 
-        buf_len = 1;
+        buf_len = 0;
         buf = (char*)calloc(1, sizeof(char));
     }
 

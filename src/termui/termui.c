@@ -3,7 +3,7 @@
     Copyright (C) 2024 Coppermine-SP <창원대학교 컴퓨터공학과 20233063 손유찬>
 */
 
-#define DEBUG_SHOW_EMPTY_SPACE
+//#define DEBUG_SHOW_EMPTY_SPACE
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,6 +18,13 @@
 #define MESSAGE_BUFFER_SIZE 150
 #define SCREEN_BUFFER_SIZE 10000
 #define TAB_SPACE 8
+
+#define TITLE_STRING "fedit - Visual Text Editor"
+#define SUBTITLE_STRING "See this repository on GitHub: Coppermine-SP/fedit"
+#define COPYRIGHT_STRING "Copyright (C) 2024-2025 Coppermine-SP."
+#define DEFAULT_MESSAGE_STRING "HELP: Ctrl-S = Save | Ctrl-Q = Quit | Ctrl-F = Find"
+#define DEFAULT_FILE_NAME_STRING "No Name"
+#define DEFAULT_FILE_TYPE_STRING "no ft"
 // #endregion
 
 // #region Macro functions
@@ -33,14 +40,6 @@
 #define COLOR_NORMAL printf("\x1b[0m")
 // #endregion
 
-// #region String constants
-static const char* default_message_string = "HELP: Ctrl-S = Save | Ctrl-Q = Quit | Ctrl-F = Find";
-static const char* default_file_name_string = "No Name";
-static const char* default_file_type_string = "no ft";
-static const char* title_string = "fedit -- Visual Text Editor";
-static const char* subtitle_string = "Copyright (C) 2024 Coppermine-SP";
-// #endregion
-
 // #region Global variables
 static void (*resize_callback)();
 static char* screen_buf = NULL;
@@ -53,7 +52,7 @@ void ui_alert(){
     printf("\a");
 }
 
-// Message must be buffered. because message bar needs to be redrawn during a terminal resize.
+// Message must be buffered. because message bar needs to be redrawn during a terminal resize event.
 static char message_buf[MESSAGE_BUFFER_SIZE];
 void ui_show_message(const char* msg){
     CURSOR_HIDE;
@@ -65,7 +64,7 @@ void ui_show_message(const char* msg){
 }
 
 void ui_show_default_message(){
-    ui_show_message(default_message_string);
+    ui_show_message(DEFAULT_MESSAGE_STRING);
 }
 
 static bool get_file_type(char* const src, char* buf, int buf_len){
@@ -103,8 +102,8 @@ static void draw_status(){
     if(status.file_name != NULL)
     has_filetype = get_file_type(status.file_name, filetype_string, 15);
     
-    int left = sprintf(left_buf,"[%s] - %d lines", (status.file_name == NULL ? default_file_name_string : status.file_name), status.total_lines);
-    int right = sprintf(right_buf,"%s | %d/%d ",(has_filetype) ? filetype_string :default_file_type_string ,status.cursor_line, status.total_lines);
+    int left = sprintf(left_buf,"[%s] - %d lines", (status.file_name == NULL ? DEFAULT_FILE_NAME_STRING : status.file_name), status.total_lines);
+    int right = sprintf(right_buf,"%s | %d/%d ",(has_filetype) ? filetype_string : DEFAULT_FILE_TYPE_STRING ,status.cursor_line, status.total_lines);
 
     printf("%s",left_buf);
     for(int i = 0; i < terminal_size.cols - (left + right); i++) printf(" ");
@@ -116,23 +115,23 @@ static void draw_status(){
 }
 
 void ui_set_motd(bool state){
-    int title_len = strlen(title_string);
-    int subtitle_len = strlen(subtitle_string);
     CURSOR_HIDE;
-    CURSOR_GOTO((terminal_size.rows/2)-3, (terminal_size.cols - title_len) / 2);
+    CURSOR_GOTO((terminal_size.rows/2)-3, (terminal_size.cols - strlen(TITLE_STRING)) / 2);
 
-    if(state)printf("%s", title_string);
+    if(state)printf("%s", TITLE_STRING);
     else CLEAR_LINE;
 
-    CURSOR_GOTO((terminal_size.rows/2)-2, (terminal_size.cols - subtitle_len) / 2);
-    if(state)printf("%s", subtitle_string);
+    CURSOR_GOTO((terminal_size.rows/2)-1, (terminal_size.cols - strlen(SUBTITLE_STRING)) / 2);
+    if(state)printf("%s", SUBTITLE_STRING);
+    else CLEAR_LINE;
+
+    CURSOR_GOTO((terminal_size.rows/2), (terminal_size.cols - strlen(COPYRIGHT_STRING)) / 2);
+    if(state)printf("%s", COPYRIGHT_STRING);
     else CLEAR_LINE;
     
     motd_showing = state;
-    if(!state){
-        CURSOR_GOTO(0, 0);
-        CURSOR_SHOW;
-    }
+    ui_cursor_move(0,0);
+    
 }
 
 void ui_set_status(int cursor_line, int total_lines, char* const file_name){
@@ -212,7 +211,7 @@ bool ui_show_prompt(char* const msg, char* buf){
     ui_show_message(msg);
     ui_input_loop(&prompt_input_event);
 
-    ui_show_message(default_message_string);
+    ui_show_message(DEFAULT_MESSAGE_STRING);
     if(prompt_input_buf[0] == '\0') return false;
 
     strcpy(buf, prompt_input_buf);
@@ -247,14 +246,17 @@ void ui_draw_text(const char* begin, int len){
                 }
 
                 if(*cur == '\r' || *cur == 0){
-                    cur++;
-
-                    #ifdef DEBUG_SHOW_EMPTY_SPACE
                     if(*cur == 0){
-                        printf("_");
+                        if(len == 1) printf("~");
+                        #ifdef DEBUG_SHOW_EMPTY_SPACE
+                        else{
+                            printf("_");
+                            j++;
+                        }
+                        #endif   
                     }
-                    #endif
-
+                    cur++;
+                    j--;
                     continue;
                 }
                 else if(*cur == '\n'){
@@ -311,7 +313,7 @@ void ui_init(void (*callback)(int cols, int rows)){
 
     terminal_size = nt_get_terminal_size();
     screen_buf = calloc(SCREEN_BUFFER_SIZE, sizeof(char));
-    ui_show_message(default_message_string);
+    ui_show_message(DEFAULT_MESSAGE_STRING);
 }
 
 void ui_dispose(){

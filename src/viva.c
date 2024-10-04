@@ -14,9 +14,10 @@
 #include "termui/termui_types.h"
 
 // #region Macro constants
-#define MAX_FILE_NAME_SIZE 128
+#define MAX_FILE_NAME_SIZE 50
 #define LF '\n'
 #define TAB '\t'
+#define TAB_SPACE 8
 // #endregion
 
 // #region Global variables
@@ -71,7 +72,7 @@ int get_screen_pos(int base, int x){
         else{
             if(tmp == 0) continue;
             else if(tmp == TAB){
-                int tab_size = 8 - ((cols - pad) % 8);
+                int tab_size = TAB_SPACE - ((cols - pad) % TAB_SPACE);
                 pad -= tab_size;
                 screen_pos += tab_size;
                 continue;
@@ -91,7 +92,7 @@ int get_total_lines(){
     int lines = 0;
     for(int i = 0; i < buf_len; i++) if(buf[i] == LF) lines++;
 
-    if(lines == 0 && buf_len != 0) lines = 1;
+    if(lines != 0)lines++;
     return lines;
 }
 
@@ -119,10 +120,6 @@ void adjust_basepos_down(int* base, int* rel){
         *base += i;
         *rel -= i;
     }
-}
-
-void adjust_basepos_up(){
-
 }
 // #endregion
 
@@ -205,7 +202,7 @@ void cursor_move_left(){
 }
 
 void cursor_move_right(){
-    if((base_pos + rel_pos) >= buf_len-1 || buf[base_pos + rel_pos] == LF){
+    if((base_pos + rel_pos) >= buf_len || buf[base_pos + rel_pos] == LF){
         ui_alert();
         return;
     }
@@ -341,8 +338,7 @@ void cursor_pgdown(){
 }
 // #endregion
 
-bool input_event(enum key_type type, char c)
-{
+bool input_event(enum key_type type, char c){
     if(type != NORMAL_KEY){
         if(type == CONTROL_KEY){
             if (c == CTRL_KEY('q')) return quit_function();
@@ -402,16 +398,30 @@ int main(int argc, char *argv[]){
 // #region Editor functions
 void editor_insert(char x){
     te_insert(x);
-    rel_pos++;
 
     is_saved = false;
+    rel_pos++;
+    adjust_basepos_down(&base_pos, &rel_pos);
+
     te_set_cursor(base_pos + rel_pos);
+
+    if(x == LF || base_pos + rel_pos == 1) total_lines++;
     editor_draw(true);
 }
 
 void editor_delete(){
-    is_saved = false;
+    if(base_pos + rel_pos == 0){
+        ui_alert();
+        return;
+    }
 
+    int abs_pos = base_pos + --rel_pos;
+    if(buf[abs_pos] == LF || abs_pos == 1) total_lines--; 
+    is_saved = false;
+    te_set_cursor(abs_pos);
+    te_delete();
+
+    editor_draw(true);
 }
 
 void editor_cursor_move(enum key_type x){
@@ -528,10 +538,10 @@ bool save_function(bool force_new_file){
     else{
         bool is_new_file = false;
         if(file_name == NULL || force_new_file){
-            char buf[50];
+            char buf[MAX_FILE_NAME_SIZE];
             if(!ui_show_prompt("New file name: ", buf)) return true;
             is_new_file= true;
-            file_name = (char*)malloc(50 * sizeof(char));
+            file_name = (char*)malloc(MAX_FILE_NAME_SIZE * sizeof(char));
 
             if(file_name != NULL) free(file_name);
             strcpy(file_name, buf);
