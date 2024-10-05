@@ -25,6 +25,7 @@
 #define DEFAULT_MESSAGE_STRING "HELP: Ctrl-S = Save | Ctrl-Q = Quit | Ctrl-F = Find"
 #define DEFAULT_FILE_NAME_STRING "No Name"
 #define DEFAULT_FILE_TYPE_STRING "no ft"
+#define EMPTY_ROW_STRING "\x1b[2m~\x1b[0m"
 // #endregion
 
 // #region Macro functions
@@ -246,7 +247,7 @@ void ui_draw_text(const char* begin, int len){
 
                 if(*cur == '\r' || *cur == 0){
                     if(*cur == 0){
-                        if(len == 1) printf("~");
+                        if(len == 1) printf(EMPTY_ROW_STRING);
                         #ifdef DEBUG_SHOW_EMPTY_SPACE
                         else{
                             printf("_");
@@ -285,7 +286,7 @@ void ui_draw_text(const char* begin, int len){
 
             }
         }
-        else printf("~");  
+        else printf(EMPTY_ROW_STRING);  
     }
 
     fflush(stdout);
