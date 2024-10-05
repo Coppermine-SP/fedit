@@ -80,7 +80,8 @@ const char* te_get_buffer(int* len){
 }
 
 bool te_buffer_save(char* const file_name){
-    FILE* file = fopen(file_name, "w+");
+    if(file_name == NULL) return false;
+    FILE* file = fopen(file_name, "w");
 
     if(file == NULL) return false;
     if(gap_opened) gap_close();

@@ -416,7 +416,7 @@ void editor_delete(){
     }
 
     int abs_pos = base_pos + --rel_pos;
-    if(buf[abs_pos] == LF || abs_pos == 1) total_lines--; 
+    if(buf[abs_pos] == LF || abs_pos == 0) total_lines--; 
     is_saved = false;
     te_set_cursor(abs_pos);
     te_delete();
@@ -555,9 +555,9 @@ bool save_function(bool force_new_file){
             char buf[MAX_FILE_NAME_SIZE];
             if(!ui_show_prompt("New file name: ", buf)) return true;
             is_new_file= true;
+            if(file_name != NULL) free(file_name);
             file_name = (char*)malloc(MAX_FILE_NAME_SIZE * sizeof(char));
 
-            if(file_name != NULL) free(file_name);
             strcpy(file_name, buf);
             editor_draw(false);
         }
