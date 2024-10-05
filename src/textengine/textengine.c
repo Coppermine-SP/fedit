@@ -81,7 +81,7 @@ const char* te_get_buffer(int* len){
 
 bool te_buffer_save(char* const file_name){
     if(file_name == NULL) return false;
-    FILE* file = fopen(file_name, "w");
+    FILE* file = fopen(file_name, "wb");
 
     if(file == NULL) return false;
     if(gap_opened) gap_close();
@@ -94,6 +94,10 @@ bool te_buffer_save(char* const file_name){
 
 void te_init(char* const file_name){
     if(file_name != NULL){
+        /*
+            Only binary mode has well-defined behavior in standard C.
+            In text mode, using ftell() to determine length of LF text in Windows will munging of newlines takes that messes up offsets.
+        */
         FILE* file = fopen(file_name, "rb");
 
         if(file == NULL) goto empty_file;
