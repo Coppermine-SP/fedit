@@ -46,6 +46,7 @@ bool save_function(bool force_new_file);
 
 void editor_cursor_move(enum key_type x);
 void editor_resize_event();
+void editor_update();
 void editor_draw(bool force);
 void editor_insert(char x);
 void editor_delete();
@@ -222,6 +223,8 @@ void cursor_move_right(){
 }
 
 void cursor_home(){
+    te_close_cursor();
+    editor_update();
     if(buf[base_pos + rel_pos] == LF){
         if(rel_pos > 0 && buf[base_pos + rel_pos - 1] != LF) rel_pos--;
         else return;
@@ -248,6 +251,8 @@ void cursor_home(){
 }
 
 void cursor_end(){
+    te_close_cursor();
+    editor_update();
     if(buf[base_pos + rel_pos] == LF) return;
 
     int next = rel_pos;
@@ -273,6 +278,7 @@ void cursor_end(){
 
 void cursor_pgup(){
     te_close_cursor();
+    editor_update();
     if(base_pos == 0){
         ui_alert();
         return;
@@ -318,6 +324,7 @@ void cursor_pgup(){
 
 void cursor_pgdown(){
     te_close_cursor();
+    editor_update();
     int next = base_pos;
     int tmp;
     while(get_screen_pos(base_pos, next - base_pos) < MAX_SCRREN_POS){
@@ -450,12 +457,17 @@ void editor_delete(){
 
 void editor_cursor_move(enum key_type x){
     te_close_cursor();
+    editor_update();
     if(x == UP_ARROW) cursor_move_up();
     else if(x == DOWN_ARROW) cursor_move_down();
     else if(x == LEFT_ARROW) cursor_move_left();
     else cursor_move_right();
 
     editor_draw(true);
+}
+
+void editor_update(){
+    buf = te_get_buffer(&buf_len);
 }
 
 void editor_draw(bool force){
@@ -472,7 +484,7 @@ void editor_draw(bool force){
         (e.g., text insertion, deletion and terminal resize event.)
     */
 
-    buf = te_get_buffer(&buf_len);
+    editor_update();
     if(last_basepos != base_pos) base_lines = get_base_lines();
     if(last_relpos != rel_pos) rel_lines = get_rel_lines();
 
