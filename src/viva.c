@@ -90,9 +90,15 @@ int get_screen_pos(int base, int x){
 
 int get_total_lines(){
     int lines = 0;
-    for(int i = 0; i < buf_len; i++) if(buf[i] == LF) lines++;
+    bool is_empty = true;
+    for(int i = 0; i < buf_len; i++){
+        if(buf[i] != 0){
+            if(buf[i] == LF) lines++;
+            is_empty = false;
+        }
+    }
 
-    if(lines != 0)lines++;
+    if(!is_empty)lines++;
     return lines;
 }
 
@@ -405,7 +411,7 @@ void editor_insert(char x){
 
     te_set_cursor(base_pos + rel_pos);
 
-    if(x == LF || base_pos + rel_pos == 1) total_lines++;
+    if(x == LF || (total_lines == 0 && base_pos + rel_pos == 1)) total_lines++;
     editor_draw(true);
 }
 
@@ -416,7 +422,7 @@ void editor_delete(){
     }
 
     int abs_pos = base_pos + --rel_pos;
-    if(buf[abs_pos] == LF || abs_pos == 0) total_lines--; 
+    if(buf[abs_pos] == LF) total_lines--;
     is_saved = false;
     te_set_cursor(abs_pos);
     te_delete();
@@ -434,8 +440,12 @@ void editor_delete(){
         base_pos -= i;
         rel_pos = i-1;
     }
-
     editor_draw(true);
+
+    if(abs_pos == 0){
+        total_lines = get_total_lines();
+        editor_draw(false);
+    }
 }
 
 void editor_cursor_move(enum key_type x){
