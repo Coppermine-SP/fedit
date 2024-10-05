@@ -33,12 +33,26 @@ terminal_size_t nt_get_terminal_size(){
 }
 
 void nt_configure_term_env(){
-    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
-    DWORD dw_mode;
+    HANDLE out_handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    HANDLE in_handle = GetStdHandle(STD_INPUT_HANDLE);
+    DWORD out_mode;
+    DWORD in_mode;
 
-    GetConsoleMode(handle, &dw_mode);
-    dw_mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-    SetConsoleMode(handle, dw_mode);
+    GetConsoleMode(out_handle, &out_mode);
+    GetConsoleMode(in_handle, &in_mode);
+    out_mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+
+    /*
+        To prevent the terminal from intercepting Ctrl-S events,
+        ENABLE_LINE_INPUT flag should be disabled in STD_INPUT_HANDLE.
+
+        About High-Level Console Modes (Windows Console API):
+        https://learn.microsoft.com/en-us/windows/console/high-level-console-modes
+    */
+    in_mode &= ~(ENABLE_ECHO_INPUT | ENABLE_LINE_INPUT | ENABLE_QUICK_EDIT_MODE | ENABLE_INSERT_MODE | ENABLE_PROCESSED_INPUT);
+    
+    SetConsoleMode(out_handle, out_mode);
+    SetConsoleMode(in_handle, in_mode);
 
     /*
         There is no need to enable mouse tracking to intercept mouse wheel event in Win32.
