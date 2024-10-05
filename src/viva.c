@@ -104,7 +104,7 @@ int get_base_lines(){
 
 int get_rel_lines(){
     int lines = 0;
-    for(int i = 0; i + base_pos < base_pos + rel_pos; i++) if(buf[base_pos + i] == LF) lines++;
+    for(int i = 1; i + base_pos < base_pos + rel_pos; i++) if(buf[base_pos + i] == LF) lines++;
     return lines;
 }
 
