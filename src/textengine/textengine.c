@@ -9,8 +9,8 @@
 #include <stdbool.h>
 
 // #region Macro constants
-#define GAP_SIZE 15
-#define MEMORY_EXPANSION_FACTOR 10
+#define GAP_SIZE 30
+#define MEMORY_EXPANSION_FACTOR 5
 // #endregion
 
 // #region Global variables
@@ -94,14 +94,14 @@ bool te_buffer_save(char* const file_name){
 
 void te_init(char* const file_name){
     if(file_name != NULL){
-        FILE* file = fopen(file_name, "r");
+        FILE* file = fopen(file_name, "rb");
 
         if(file == NULL) goto empty_file;
         fseek(file, 0, SEEK_END);
         buf_len = ftell(file);
         fseek(file, 0, SEEK_SET);
 
-        buf = (char*)malloc(buf_len * sizeof(char));
+        buf = (char*)calloc(buf_len, sizeof(char));
         fread(buf, sizeof(char), buf_len, file);
         fclose(file);
     }
