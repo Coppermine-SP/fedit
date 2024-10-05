@@ -14,8 +14,8 @@ A simple TUI-based text editor.
 |-|-|-|:-:|
 |GCC 11.4.0|aarch64-linux-gnu|Ubuntu 24.04.5 LTS|✅|
 |Apple clang 15.0.0|arm64-apple-darwin23.5.0|macOS Sequoia 15.1|✅|
-|Microsoft Visual C++ 1936|arm64|Windows 11 Enterprise A64|🚧|
-|GCC 13.2.0|x86_64-w64-mingw32|Windows 11 Enterprise x64|🚧|
+|Microsoft Visual C++ 1936|x86-64|Windows 11 Enterprise x64|🚧|
+|GCC 13.2.0|x86_64-w64-mingw32|Windows 11 Enterprise x64|✅|
 
 ### Table of Content
 - [Features](#features)
