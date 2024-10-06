@@ -76,9 +76,8 @@ void nt_restore_term_env(){
 }
 
 enum key_type nt_get_raw_input(char* out){
-    char c;
     if(_kbhit()){
-        c = _getch();
+        const char c = (char)_getch();
 
         if(c != SPECIAL_KEY_BEGIN && iscntrl(c)){
             if(c == ESC_KEY) return ESC;
