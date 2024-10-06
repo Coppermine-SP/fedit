@@ -77,10 +77,10 @@ void nt_restore_term_env(){
 
 enum key_type nt_get_raw_input(char* out){
     char c;
-    if(kbhit()){
+    if(_kbhit()){
         c = _getch();
 
-        if(iscntrl(c)){
+        if(c != SPECIAL_KEY_BEGIN && iscntrl(c)){
             if(c == ESC_KEY) return ESC;
             else if (c == ENTER_KEY) return ENTER;
             else if(c == BACKSPACE_KEY) return BACKSPACE;
