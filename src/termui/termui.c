@@ -14,7 +14,7 @@
 #include "termui_types.h"
 
 // #region Macro constants
-#define PROMPT_INPUT_BUFFER_SIZE 100
+#define PROMPT_INPUT_BUFFER_SIZE 50
 #define MESSAGE_BUFFER_SIZE 150
 #define SCREEN_BUFFER_SIZE 10000
 #define TAB_SPACE 8
@@ -178,9 +178,7 @@ static bool prompt_input_event(enum key_type type, char c){
         However, nested functions are not part of the C standard; it is an extension in GNU C.
         https://gcc.gnu.org/onlinedocs/gcc/Nested-Functions.html
     */
-    if(prompt_input_idx - 1 > PROMPT_INPUT_BUFFER_SIZE) return false;
-
-    if(type == ESC){
+    if(prompt_input_idx - 1 > PROMPT_INPUT_BUFFER_SIZE || type == ESC){
         prompt_input_buf[0] = '\0';
         return false;
     }
