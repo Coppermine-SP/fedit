@@ -35,10 +35,16 @@ A simple TUI-based text editor.
 - GCC 또는 LLVM/Clang, Microsoft Visual C++ 컴파일러
 
 >[!WARNING]
->
 > **Windows 환경에서 컴파일 할 경우에는 Windows SDK 설치가 필요합니다.**
 >
 > 이는 win32_native_termui.c가 Win32 API를 사용하기 때문입니다.
+
+>[!WARNING]
+> **MSVC에서 컴파일하는 경우, SDL Check를 비활성화하십시오.**
+>
+> 이에 대한 자세한 사항은 다음 Microsoft 문서를 참조하십시오:
+> https://learn.microsoft.com/en-us/cpp/build/reference/sdl-enable-additional-security-checks?view=msvc-170
+
 
 ## Project Status Tracker
 
