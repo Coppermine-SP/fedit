@@ -2,6 +2,7 @@
 fedit (viva)는 간단한 TUI 텍스트 편집기입니다.
 
 -   영어 이외의 다국어 입출력은 지원하지 않습니다. (유니코드 미 지원)
+
     !(반드시 입력기가 US Keyboard로 설정되어 있는지 확인하십시오.)
 
 -   불러 올 파일의 개행 문자는 반드시 LF 형식이여야 합니다.
@@ -9,7 +10,9 @@ fedit (viva)는 간단한 TUI 텍스트 편집기입니다.
 -   Windows 10 1607 (Redstone 1) 이상, 또는 POSIX 호환 운영 체제(macOS, Linux)에서 실행 가능합니다.
 
 -   GCC, Clang/LLVM 또는 Microsoft Visual C++ Compiler에서 컴파일 할 수 있습니다.
+
     !(Windows 환경에서 컴파일 할 경우에는 Windows SDK 설치가 필요합니다: https://developer.microsoft.com/en-us/windows/downloads/windows-sdk/)
+    
     !(MSVC를 통해 컴파일하는 경우에는 반드시 SDL Check를 비활성화하십시오: https://learn.microsoft.com/en-us/cpp/build/reference/sdl-enable-additional-security-checks?view=msvc-170)
 
 make 명령을 사용하여 프로그램을 컴파일하고, 아래 명령을 사용해 빈 파일 또는 기존 파일을 여십시오.
