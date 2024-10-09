@@ -15,7 +15,7 @@
 
 // #region Macro constants
 #define PATTERN_LEN_MIN 2
-#define PATTERN_LEN_MAX 15
+#define PATTERN_LEN_MAX 30
 #define TAB_SPACE 8
 
 #define LF '\n'
@@ -208,10 +208,16 @@ void cursor_move_left(){
         else{
             int i;
             for(i = 0; i < cols; i++)
-                if(buf[base_pos-i] == LF) break;
+                if(buf[base_pos-i] == LF) {
+                    i--;
+                    break;
+                }
 
-            base_pos -= i;
-            rel_pos -= i;
+            if(i == 0) ui_alert();
+            else{
+                base_pos -= i;
+                rel_pos += i;
+            }
         }
     }
     else{
@@ -371,7 +377,7 @@ int main(int argc, char *argv[]){
     buffer_update();
     calc_total_lines();
 
-    ui_init(editor_resize_event);
+    ui_init();
     signal(SIGINT, signal_handler);
 
     update_terminal_size();
