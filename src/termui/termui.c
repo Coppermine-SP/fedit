@@ -14,7 +14,6 @@
 #include "termui_types.h"
 
 // #region Macro constants
-#define PROMPT_INPUT_BUFFER_SIZE 50
 #define MESSAGE_BUFFER_SIZE 150
 #define SCREEN_BUFFER_SIZE 10000
 #define TAB_SPACE 8
@@ -42,29 +41,20 @@
 // #endregion
 
 // #region Global variables
-static void (*resize_callback)();
-static char* screen_buf = NULL;
 static terminal_size_t terminal_size;
 static status_t status;
 static bool motd_showing = false;
 // #endregion
 
-void ui_alert(){
-    printf("\a");
+// #region Helper functions
+static void enable_stdout_buffer(){
+    static char buf[SCREEN_BUFFER_SIZE];
+    setvbuf(stdout, buf, _IOFBF, terminal_size.rows * terminal_size.cols);
 }
 
-// Message must be buffered. because message bar needs to be redrawn during a terminal resize event.
-static char message_buf[MESSAGE_BUFFER_SIZE];
-void ui_show_message(const char* msg){
-    CURSOR_HIDE;
-    CURSOR_GOTO(terminal_size.rows, 0);
-    CLEAR_LINE;
-    if(msg != NULL)strcpy(message_buf, msg);
-    printf("%s", message_buf);
-}
-
-void ui_show_default_message(){
-    ui_show_message(DEFAULT_MESSAGE_STRING);
+static void disable_stdout_buffer(){
+    fflush(stdout);
+    setvbuf(stdout, NULL, _IONBF, 0);
 }
 
 static bool get_file_type(char* const src, char* buf, int buf_len){
@@ -87,8 +77,7 @@ static bool get_file_type(char* const src, char* buf, int buf_len){
 }
 
 static void draw_status(){
-    //Prevent screen flashing via buffered stdout
-    setvbuf(stdout, screen_buf, _IOFBF, terminal_size.rows * terminal_size.cols);
+    enable_stdout_buffer();
     CURSOR_HIDE;
     COLOR_INVERT;
     CURSOR_GOTO(terminal_size.rows-1, 0);
@@ -109,9 +98,39 @@ static void draw_status(){
     for(int i = 0; i < terminal_size.cols - (left + right); i++) printf(" ");
     printf("%s ", right_buf);
     COLOR_NORMAL;
+    disable_stdout_buffer();
+}
 
-    fflush(stdout);
-    setvbuf(stdout, NULL, _IONBF, 0);
+bool update_terminal_size(){
+    terminal_size_t size = nt_get_terminal_size();
+    if(size.cols != terminal_size.cols || size.rows != terminal_size.rows){
+        terminal_size = size;
+        if(motd_showing) ui_set_motd(false);
+        ui_show_message(NULL);
+        return true;
+    }
+
+    return false;
+}
+// #endregion
+
+void ui_alert(){
+    printf("\a");
+}
+
+void ui_show_message(const char* msg){
+    // Message must be buffered. because message bar needs to be redrawn during a terminal resize event.
+    static char message_buf[MESSAGE_BUFFER_SIZE];
+
+    CURSOR_HIDE;
+    CURSOR_GOTO(terminal_size.rows, 0);
+    CLEAR_LINE;
+    if(msg != NULL)strcpy(message_buf, msg);
+    printf("%s", message_buf);
+}
+
+void ui_show_default_message(){
+    ui_show_message(DEFAULT_MESSAGE_STRING);
 }
 
 void ui_set_motd(bool state){
@@ -142,32 +161,22 @@ void ui_set_status(int cursor_line, int total_lines, char* const file_name){
     draw_status();
 }
 
-void check_terminal_size(){
-    terminal_size_t size = nt_get_terminal_size();
-    if(size.cols != terminal_size.cols || size.rows != terminal_size.rows){
-        terminal_size = size;
-        if(motd_showing) ui_set_motd(false);
-        ui_show_message(NULL);
-        resize_callback();
-    }
-}
-
-void ui_input_loop(bool (*callback)(enum key_type type, char c)){
+void ui_input_loop(bool (*input_callback)(enum key_type type, char c), void (*resize_callback)()){
     while(true){
         char c;
         enum key_type type;
 
         type = nt_get_raw_input(&c);
-        check_terminal_size();
+        if(update_terminal_size()) resize_callback();
         if(type == TIMEOUT) continue;
 
         if(motd_showing) ui_set_motd(false);
-        if(!callback(type, c)) break;
+        if(!input_callback(type, c)) break;
     }
 }
 
 static char* prompt_msg;
-static char prompt_input_buf[PROMPT_INPUT_BUFFER_SIZE];
+static char prompt_input_buf[PROMPT_INPUT_LEN_MAX];
 static char prompt_message_buf[MESSAGE_BUFFER_SIZE];
 static int prompt_input_idx;
 static bool prompt_input_event(enum key_type type, char c){
@@ -178,7 +187,7 @@ static bool prompt_input_event(enum key_type type, char c){
         However, nested functions are not part of the C standard; it is an extension in GNU C.
         https://gcc.gnu.org/onlinedocs/gcc/Nested-Functions.html
     */
-    if(prompt_input_idx - 1 > PROMPT_INPUT_BUFFER_SIZE || type == ESC){
+    if(prompt_input_idx - 1 > PROMPT_INPUT_LEN_MAX || type == ESC){
         prompt_input_buf[0] = '\0';
         return false;
     }
@@ -201,24 +210,23 @@ static bool prompt_input_event(enum key_type type, char c){
     return true;
 }
 
-bool ui_show_prompt(char* const msg, char* buf){
+int ui_show_prompt(char* const msg, char* buf, void (*resize_callback)()){
     ui_alert();
     prompt_input_idx = 0;
-    memset(prompt_input_buf, 0, PROMPT_INPUT_BUFFER_SIZE);
+    memset(prompt_input_buf, 0, PROMPT_INPUT_LEN_MAX);
     prompt_msg = msg;
     ui_show_message(msg);
-    ui_input_loop(&prompt_input_event);
+    ui_input_loop(prompt_input_event, resize_callback);
 
     ui_show_message(DEFAULT_MESSAGE_STRING);
-    if(prompt_input_buf[0] == '\0') return false;
+    if(prompt_input_buf[0] == '\0') return PROMPT_CANCELLED;
 
     strcpy(buf, prompt_input_buf);
-    return true;
+    return prompt_input_idx;
 }
 
 void ui_draw_text(const char* begin, int len){
-    //Prevent screen flashing via buffered stdout
-    setvbuf(stdout, screen_buf, _IOFBF, terminal_size.rows * terminal_size.cols);
+    enable_stdout_buffer();
     CURSOR_HIDE;
     CURSOR_GOTO(terminal_size.rows-2, terminal_size.cols);
     CLEAR_UP;
@@ -286,9 +294,7 @@ void ui_draw_text(const char* begin, int len){
         }
         else printf(EMPTY_ROW_STRING);  
     }
-
-    fflush(stdout);
-    setvbuf(stdout, NULL, _IONBF, 0);
+    disable_stdout_buffer();
 }
 
 void ui_get_terminal_size(int* cols, int* rows){
@@ -303,20 +309,16 @@ void ui_cursor_move(unsigned x, unsigned y){
     CURSOR_SHOW;
 }
 
-void ui_init(void (*callback)(int cols, int rows)){
-    resize_callback = callback;
-    setvbuf(stdout, NULL, _IONBF, 0);
+void ui_init(){
     nt_configure_term_env();
     CLEAR_SCREEN;
 
     terminal_size = nt_get_terminal_size();
-    screen_buf = calloc(SCREEN_BUFFER_SIZE, sizeof(char));
-    ui_show_message(DEFAULT_MESSAGE_STRING);
+    ui_show_default_message();
 }
 
 void ui_dispose(){
     CLEAR_SCREEN;
-    free(screen_buf);
     nt_restore_term_env();
 }
  

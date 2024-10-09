@@ -14,10 +14,12 @@
 #include "termui/termui_types.h"
 
 // #region Macro constants
-#define MAX_FILE_NAME_SIZE 50
+#define PATTERN_LEN_MIN 2
+#define PATTERN_LEN_MAX 15
+#define TAB_SPACE 8
+
 #define LF '\n'
 #define TAB '\t'
-#define TAB_SPACE 8
 // #endregion
 
 // #region Global variables
@@ -35,30 +37,33 @@ static int cols;
 static int rows;
 // #endregion
 
-// #region Macro functions
-#define MAX_SCRREN_POS ((cols*(rows-2))-1)
-// #endregion
-
 // #region Function prototypes
 bool quit_function();
 bool find_function();
 bool save_function(bool force_new_file);
 
-void editor_cursor_move(enum key_type x);
 void editor_resize_event();
-void editor_update();
+bool editor_input_event(enum key_type type, char c);
+
+void editor_cursor_move(enum key_type x);
 void editor_draw(bool force);
 void editor_insert(char x);
 void editor_delete();
 void editor_draw_cursor();
 void editor_quit();
-
-void signal_handler(int sig);
 // #endregion
 
 // #region Helper functions
-void update_terminal_size(){
+static inline void update_terminal_size(){
     ui_get_terminal_size(&cols, &rows);
+}
+
+static inline int max_screen_pos(){
+    return ((cols*(rows-2))-1);
+}
+
+static inline void buffer_update(){ 
+    buf = te_get_buffer(&buf_len); 
 }
 
 int get_screen_pos(int base, int x){
@@ -89,7 +94,7 @@ int get_screen_pos(int base, int x){
     return screen_pos;
 }
 
-int get_total_lines(){
+void calc_total_lines(){
     int lines = 0;
     bool is_empty = true;
     for(int i = 0; i < buf_len; i++){
@@ -98,9 +103,9 @@ int get_total_lines(){
             is_empty = false;
         }
     }
-
+ 
     if(!is_empty)lines++;
-    return lines;
+    total_lines = lines;
 }
 
 int get_base_lines(){
@@ -116,7 +121,7 @@ int get_rel_lines(){
 }
 
 void adjust_basepos_down(int* base, int* rel){
-    while(get_screen_pos(*base, *rel) > MAX_SCRREN_POS){
+    while(get_screen_pos(*base, *rel) > max_screen_pos()){
         int i;
         for(i = 0; i < cols; i++) 
             if(buf[(*base) + i] == LF){
@@ -126,6 +131,13 @@ void adjust_basepos_down(int* base, int* rel){
         
         *base += i;
         *rel -= i;
+    }
+}
+
+void signal_handler(int sig){
+    if(sig == SIGINT){
+        editor_quit();
+        exit(0);
     }
 }
 // #endregion
@@ -176,7 +188,7 @@ void cursor_move_down(){
 
     int base = base_pos;
     int rel = next;
-    while(get_screen_pos(base, rel) > MAX_SCRREN_POS) {
+    while(get_screen_pos(base, rel) > max_screen_pos()) {
         for(int i = base; i < buf_len; i++){
             if(buf[i] == LF){
                 base = i+1;
@@ -224,7 +236,7 @@ void cursor_move_right(){
 
 void cursor_home(){
     te_close_cursor();
-    editor_update();
+    buffer_update();
     if(buf[base_pos + rel_pos] == LF){
         if(rel_pos > 0 && buf[base_pos + rel_pos - 1] != LF) rel_pos--;
         else return;
@@ -252,7 +264,7 @@ void cursor_home(){
 
 void cursor_end(){
     te_close_cursor();
-    editor_update();
+    buffer_update();
     if(buf[base_pos + rel_pos] == LF) return;
 
     int next = rel_pos;
@@ -278,7 +290,7 @@ void cursor_end(){
 
 void cursor_pgup(){
     te_close_cursor();
-    editor_update();
+    buffer_update();
     if(base_pos == 0){
         ui_alert();
         return;
@@ -295,7 +307,7 @@ void cursor_pgup(){
     }
 
     bool line = false;
-    while(get_screen_pos(next, base_pos-next) < MAX_SCRREN_POS){
+    while(get_screen_pos(next, base_pos-next) < max_screen_pos()){
         for(int i = 1; next-i >=-1; i++){
             if(next-i < 0){
                 next = -1;
@@ -324,10 +336,10 @@ void cursor_pgup(){
 
 void cursor_pgdown(){
     te_close_cursor();
-    editor_update();
+    buffer_update();
     int next = base_pos;
     int tmp;
-    while(get_screen_pos(base_pos, next - base_pos) < MAX_SCRREN_POS){
+    while(get_screen_pos(base_pos, next - base_pos) < max_screen_pos()){
         tmp = next;
         for(int i = 0; next+i <= buf_len; i++){
             if(buf[next + i] == LF){
@@ -351,7 +363,28 @@ void cursor_pgdown(){
 }
 // #endregion
 
-bool input_event(enum key_type type, char c){
+// #region Entrypoint
+int main(int argc, char *argv[]){
+    file_name  = argc > 1 ? argv[1] : NULL;
+
+    te_init(file_name);
+    buffer_update();
+    calc_total_lines();
+
+    ui_init(editor_resize_event);
+    signal(SIGINT, signal_handler);
+
+    update_terminal_size();
+    editor_draw(true);
+    if (argc == 1) ui_set_motd(true);
+
+    ui_input_loop(editor_input_event, editor_resize_event);
+    editor_quit();
+}
+// #endregion
+
+// #region Editor event callbacks
+bool editor_input_event(enum key_type type, char c){
     if(type != NORMAL_KEY){
         if(type == CONTROL_KEY){
             if (c == CTRL_KEY('q')) return quit_function();
@@ -372,8 +405,6 @@ bool input_event(enum key_type type, char c){
         else if(type == PGDOWN) cursor_pgdown();
         else if(type == ENTER) editor_insert(LF);
         else if(type == BACKSPACE) editor_delete();
-
-
     }
     else editor_insert(c);
 
@@ -381,30 +412,9 @@ bool input_event(enum key_type type, char c){
     return true;
 }
 
-void signal_handler(int sig){
-    if(sig == SIGINT){
-        editor_quit();
-        exit(0);
-    }
-}
-
-// #region Entrypoint
-int main(int argc, char *argv[]){
-    file_name  = argc > 1 ? argv[1] : NULL;
-
-    te_init(file_name);
-    buf = te_get_buffer(&buf_len);
-    total_lines = get_total_lines();
-
-    ui_init(editor_resize_event);
-    signal(SIGINT, signal_handler);
-
+void editor_resize_event(){
     update_terminal_size();
     editor_draw(true);
-    if (argc == 1) ui_set_motd(true);
-
-    ui_input_loop(input_event);
-    editor_quit();
 }
 // #endregion
 
@@ -450,24 +460,20 @@ void editor_delete(){
     editor_draw(true);
 
     if(abs_pos == 0){
-        total_lines = get_total_lines();
+        calc_total_lines();
         editor_draw(false);
     }
 }
 
 void editor_cursor_move(enum key_type x){
     te_close_cursor();
-    editor_update();
+    buffer_update();
     if(x == UP_ARROW) cursor_move_up();
     else if(x == DOWN_ARROW) cursor_move_down();
     else if(x == LEFT_ARROW) cursor_move_left();
     else cursor_move_right();
 
     editor_draw(true);
-}
-
-void editor_update(){
-    buf = te_get_buffer(&buf_len);
 }
 
 void editor_draw(bool force){
@@ -484,7 +490,7 @@ void editor_draw(bool force){
         (e.g., text insertion, deletion and terminal resize event.)
     */
 
-    editor_update();
+    buffer_update();
     if(last_basepos != base_pos) base_lines = get_base_lines();
     if(last_relpos != rel_pos) rel_lines = get_rel_lines();
 
@@ -510,18 +516,13 @@ void editor_draw_cursor(){
     int y_pos = (screen_pos / cols);
 
     //화면 리사이징시 스크린 좌표가 영역을 벗어나지 않도록 방지
-    if(x_pos > cols || y_pos > rows){
+    if(x_pos >= cols || y_pos >= rows-2){
         rel_pos = 0;
         x_pos = 0;
         y_pos = 0;
     }
 
     ui_cursor_move(x_pos, y_pos);
-}
-
-void editor_resize_event(){
-    update_terminal_size();
-    editor_draw(true);
 }
 
 void editor_quit(){
@@ -540,11 +541,10 @@ bool quit_function_input_event(enum key_type type, char c)
 
 bool quit_function()
 {
-    if (!is_saved)
-    {
+    if (!is_saved){
         ui_show_message("No write since last change (Press Ctrl-Q again to override)");
         ui_alert();
-        ui_input_loop(quit_function_input_event);
+        ui_input_loop(quit_function_input_event, editor_resize_event);
 
         if (!quit_override){
             ui_show_default_message();
@@ -558,8 +558,25 @@ bool quit_function()
 // #endregion
 
 // #region Find
+int rolling_hash(){
+
+}
+
 bool find_function(){
-    ui_show_prompt("Find: ", NULL);
+    char pattern_str[PROMPT_INPUT_LEN_MAX];
+    int pattern_len = ui_show_prompt("Pattern: ", pattern_str, editor_resize_event);
+
+    if(pattern_len == PROMPT_CANCELLED) return true;
+    else if(pattern_len < PATTERN_LEN_MIN){
+        ui_alert();
+        ui_show_message("\x1b[1;31mERR_PATTRN_TOO_SHORT: Pattern is too short.\x1b[0m");
+        return true;
+    }
+    else if(pattern_len > PATTERN_LEN_MAX){
+        ui_alert();
+        ui_show_message("\x1b[1;31mERR_PATTRN_TOO_LONG: Pattern is too long.\x1b[0m");
+        return true;
+    }
 
     return true;
 }
@@ -575,12 +592,12 @@ bool save_function(bool force_new_file){
     else{
         bool is_new_file = false;
         if(file_name == NULL || force_new_file){
-            char buf[MAX_FILE_NAME_SIZE];
-            if(!ui_show_prompt("New file name: ", buf)) return true;
+            char buf[PROMPT_INPUT_LEN_MAX];
+            if(ui_show_prompt("New file name: ", buf, editor_resize_event) == PROMPT_CANCELLED) return true;
             is_new_file= true;
 
             if(is_string_malloc) free(file_name);
-            file_name = (char*)malloc(MAX_FILE_NAME_SIZE * sizeof(char));
+            file_name = (char*)malloc(PROMPT_INPUT_LEN_MAX * sizeof(char));
             is_string_malloc = true;
             strcpy(file_name, buf);
             editor_draw(false);

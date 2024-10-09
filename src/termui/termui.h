@@ -13,8 +13,7 @@ typedef struct{
 } status_t;
 
 /// @brief TUI 환경을 초기화합니다.
-/// @param callback 리사이즈 이벤트 콜백
-void ui_init(void (*callback)());
+void ui_init();
 
 /// @brief 상태 바를 업데이트 합니다.
 /// @param cursor_line 
@@ -34,13 +33,18 @@ void ui_show_default_message();
 void ui_set_motd(bool state);
 
 /// @brief stdin에서 키 입력을 받으면 콜백 함수를 실행합니다.
-/// @param callback 콜백 함수를 지정합니다. 콜백 함수의 반환값이 false이면, 루프를 탈출합니다.
-void ui_input_loop(bool (*callback)(enum key_type type, char c));
+/// @param input_callback 입력 이벤트 콜백 함수를 지정합니다. 콜백 함수의 반환값이 false이면, 루프를 탈출합니다.
+/// @param resize_callback 리사이즈 이벤트 콜백 함수를 지정합니다.
+void ui_input_loop(bool (*input_callback)(enum key_type type, char c), void (*resize_callback)());
 
 /// @brief 메시지 바에 프롬프트를 표시하고, 사용자의 입력을 스트링으로 받아 반환합니다.
 /// @param msg 프롬프트 스트링
 /// @param buf 대상 버퍼
-bool ui_show_prompt(char* const msg, char* buf);
+/// @param resize_callback 리사이즈 이벤트 콜백 함수를 지정합니다.
+/// @return 스트링의 길이를 반환합니다. (사용자가 입력을 취소했을 경우, -1)
+#define PROMPT_CANCELLED -1
+#define PROMPT_INPUT_LEN_MAX 50
+int ui_show_prompt(char* const msg, char* buf, void (*resize_callback)());
 
 /// @brief 스크린 버퍼를 그립니다.
 /// @param screen_buf 스크린 버퍼
