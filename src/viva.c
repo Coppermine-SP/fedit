@@ -587,15 +587,17 @@ typedef struct node{
 } node_t;
 
 void find_draw(){
+     ui_set_status(0, total_lines, file_name);
      ui_show_message("Pattern \"Windows\": 1 / 24 (HELP: ESC = Exit | Enter = Edit | LArrow = Prev | RArrow = Next)");
 }
 
 bool find_input_event(enum key_type type, char c){
-
+    return true;
 }
 
 void find_resize_event(){
-
+    update_terminal_size();
+    find_draw();
 }
 
 bool find_function(){
@@ -623,8 +625,9 @@ bool find_function(){
     int pattern_hash = hash(pattern_str, pattern_len);
     int window_hash = hash(buf, pattern_len);
     int found = 0;
-
     int current_line_base_pos = 0;
+
+    //Rabin-Karp algorithm
     for(int i = 0; i < buf_len; i++){
         if(buf[i] == LF) current_line_base_pos = i;
         if(window_hash == pattern_hash && compare_string(buf + i, pattern_str, pattern_len)){
@@ -644,6 +647,7 @@ bool find_function(){
         int end = i + pattern_len;
         if(end > buf_len) break;
 
+        //Sliding window
         window_hash = 2 * (window_hash - (buf[i] * power(2, pattern_len-1))) + buf[end];
     }
     
