@@ -16,7 +16,6 @@
 // #region Macro constants
 #define MESSAGE_BUFFER_SIZE 150
 #define SCREEN_BUFFER_SIZE 10000
-#define TAB_SPACE 8
 
 #define TITLE_STRING "Welcome to fedit (Visual Text Editor)."
 #define SUBTITLE_STRING "See this repository on GitHub: Coppermine-SP/fedit"
@@ -38,6 +37,14 @@
 #define CLEAR_UP printf("\x1b[1J")
 #define COLOR_INVERT printf("\x1b[7m")
 #define COLOR_NORMAL printf("\x1b[0m")
+// #endregion
+
+// #region Types
+typedef struct{
+    char* file_name;
+    int total_lines;
+    int cursor_line;
+} status_t;
 // #endregion
 
 // #region Global variables
@@ -265,12 +272,12 @@ void ui_draw_text(const char* begin, int len){
                     j--;
                     continue;
                 }
-                else if(*cur == '\n'){
+                else if(*cur == LF){
                     line_pos = 0;
                     cur++;
                     break;
                 }
-                else if(*cur == '\t'){
+                else if(*cur == TAB){
                     int space = TAB_SPACE - (line_pos % TAB_SPACE);
                     line_pos += space;
                     for(int k = 0; k < space; k++, j++){

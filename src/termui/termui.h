@@ -6,11 +6,20 @@
 #include <stdbool.h>
 #include "termui_types.h"
 
-typedef struct{
-    char* file_name;
-    int total_lines;
-    int cursor_line;
-} status_t;
+//탭 문자의 간격
+#define TAB_SPACE 8
+
+//LF 문자
+#define LF '\n'
+
+//TAB 문자
+#define TAB '\t'
+
+//프롬프트가 취소되었을 때의 반환 값
+#define PROMPT_CANCELLED -1
+
+//프롬프트 입력의 최대 길이
+#define PROMPT_INPUT_LEN_MAX 50
 
 /// @brief TUI 환경을 초기화합니다.
 void ui_init();
@@ -42,8 +51,6 @@ void ui_input_loop(bool (*input_callback)(enum key_type type, char c), void (*re
 /// @param buf 대상 버퍼
 /// @param resize_callback 리사이즈 이벤트 콜백 함수를 지정합니다.
 /// @return 스트링의 길이를 반환합니다. (사용자가 입력을 취소했을 경우, -1)
-#define PROMPT_CANCELLED -1
-#define PROMPT_INPUT_LEN_MAX 50
 int ui_show_prompt(char* const msg, char* buf, void (*resize_callback)());
 
 /// @brief 스크린 버퍼를 그립니다.
