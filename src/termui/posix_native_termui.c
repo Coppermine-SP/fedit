@@ -56,7 +56,7 @@ void nt_configure_term_env(){
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &attribute);
 
     /*
-        Enable mouse tracking for prevent scroiling in the console.
+        Enable mouse tracking for prevent scrolling in the console.
 
         About XTerm Control Sequences:
         https://invisible-island.net/xterm/ctlseqs/ctlseqs.html
