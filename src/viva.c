@@ -16,10 +16,6 @@
 // #region Macro constants
 #define PATTERN_LEN_MIN 2
 #define PATTERN_LEN_MAX 30
-#define TAB_SPACE 8
-
-#define LF '\n'
-#define TAB '\t'
 // #endregion
 
 // #region Global variables
@@ -64,6 +60,23 @@ static inline int max_screen_pos(){
 
 static inline void buffer_update(){ 
     buf = te_get_buffer(&buf_len); 
+}
+
+static inline int power(int x, int y){
+    int result = 1;
+    for(int i = 0; i < y; i++) result *= x;
+    return result;
+}
+
+int hash(const char* str, int len){
+    int result = 0;
+    for(int i = 0; i < len; i++) result += (int)str[i] * power(2, len - i-1);
+    return result;
+}
+
+bool compare_string(const char* lhs, const char* rhs, int len){
+    for(int i = 0; i < len; i++) if(lhs[i] != rhs[i]) return false;
+    return true;
 }
 
 int get_screen_pos(int base, int x){
@@ -564,7 +577,24 @@ bool quit_function()
 // #endregion
 
 // #region Find
-int rolling_hash(){
+typedef struct node{
+    struct node* prev;
+    struct node* next;
+
+    int idx;
+    int base_pos;
+    int rel_pos;
+} node_t;
+
+void find_draw(){
+     ui_show_message("Pattern \"Windows\": 1 / 24 (HELP: ESC = Exit | Enter = Edit | LArrow = Prev | RArrow = Next)");
+}
+
+bool find_input_event(enum key_type type, char c){
+
+}
+
+void find_resize_event(){
 
 }
 
@@ -575,13 +605,63 @@ bool find_function(){
     if(pattern_len == PROMPT_CANCELLED) return true;
     else if(pattern_len < PATTERN_LEN_MIN){
         ui_alert();
-        ui_show_message("\x1b[1;31mERR_PATTRN_TOO_SHORT: Pattern is too short.\x1b[0m");
+        ui_show_message("\x1b[1;31mFind: Pattern is too short.\x1b[0m");
         return true;
     }
     else if(pattern_len > PATTERN_LEN_MAX){
         ui_alert();
-        ui_show_message("\x1b[1;31mERR_PATTRN_TOO_LONG: Pattern is too long.\x1b[0m");
+        ui_show_message("\x1b[1;31mFind: Pattern is too long.\x1b[0m");
         return true;
+    }
+
+    te_close_cursor();
+    buffer_update();
+    if(pattern_len > buf_len) goto find_exit;
+
+    node_t* head = NULL;
+    node_t* cur = NULL;
+    int pattern_hash = hash(pattern_str, pattern_len);
+    int window_hash = hash(buf, pattern_len);
+    int found = 0;
+
+    int current_line_base_pos = 0;
+    for(int i = 0; i < buf_len; i++){
+        if(buf[i] == LF) current_line_base_pos = i;
+        if(window_hash == pattern_hash && compare_string(buf + i, pattern_str, pattern_len)){
+            node_t* node = (node_t*)malloc(sizeof(node_t));
+            if(cur != NULL) cur->next = node;
+
+            node->base_pos = current_line_base_pos;
+            node->rel_pos = i - current_line_base_pos;
+            node->next = NULL;
+            node->prev = cur;
+            node->idx = found++;
+
+            cur = node;
+            if(head == NULL)head = node;
+        }
+
+        int end = i + pattern_len;
+        if(end > buf_len) break;
+
+        window_hash = 2 * (window_hash - (buf[i] * power(2, pattern_len-1))) + buf[end];
+    }
+    
+    if(head == NULL){
+        find_exit:
+        ui_alert();
+        ui_show_message("\x1b[1;31mFind: No results.\x1b[0m");
+    }
+    else{
+        find_draw();
+        ui_input_loop(find_input_event, find_resize_event);
+        
+        //Dispose all nodes
+        do{
+            cur = cur->next;
+            free(cur);
+        }
+        while(cur != NULL);
     }
 
     return true;
