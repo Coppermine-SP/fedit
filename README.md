@@ -3,7 +3,7 @@
 
 **2024년 창원대학교 컴퓨터공학과 고급자료구조 과제**
 
-A simple TUI-based text editor.
+A simple text editor.
 
 <p align="center">
 <img src="https://github.com/user-attachments/assets/1dfa04d7-8abb-4800-8fa6-ca8179a12cf6" style="width:70%">
