@@ -129,9 +129,9 @@ void calc_total_lines(){
     total_lines = lines;
 }
 
-int get_base_lines(){
+int get_base_lines(int base){
     int lines = 1;
-    for(int i = 0; i <= base_pos; i++) if(buf[i] == LF) lines++;
+    for(int i = 0; i <= base; i++) if(buf[i] == LF) lines++;
     return lines;
 }
 
@@ -500,7 +500,7 @@ void editor_cursor_move(enum key_type x){
     else if(x == LEFT_ARROW) cursor_move_left();
     else cursor_move_right();
 
-    editor_draw(true);
+    editor_draw(false);
 }
 
 void editor_draw(bool force){
@@ -518,7 +518,7 @@ void editor_draw(bool force){
     */
 
     buffer_update();
-    if(last_basepos != base_pos) base_lines = get_base_lines();
+    if(last_basepos != base_pos) base_lines = get_base_lines(base_pos);
     if(last_relpos != rel_pos) rel_lines = get_rel_lines();
 
     ui_set_status((base_lines + rel_lines), total_lines, file_name);
@@ -601,7 +601,7 @@ static int find_pattern_len;
 static char* find_screen_buf = NULL;
 
 void find_draw(){
-     ui_set_status(0, total_lines, file_name);
+     ui_set_status(get_base_lines(find_current_node->base_pos), total_lines, file_name);
 
     char message_buf[100];
     sprintf(message_buf, "Pattern \"%s\": %d / %d", find_pattern_str, find_current_node->idx+1, find_node_count);
@@ -715,16 +715,17 @@ bool find_function(){
         
         //Dispose all nodes
         do{
-            cur = cur->next;
-            free(cur);
+            node_t* tmp = head->next;
+            free(head);
+            head = tmp;
         }
-        while(cur != NULL);
+        while(head != NULL);
     }
 
     free(find_pattern_str);
     free(find_screen_buf);
     ui_show_default_message();
-    editor_draw(true);
+    editor_draw(false);
     return true;
 }
 // #endregion
