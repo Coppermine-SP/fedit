@@ -631,6 +631,11 @@ bool find_input_event(enum key_type type, char c){
     }
     else if(type == ESC) return false;
     else if(type == ENTER){
+        base_pos = find_current_node->base_pos;
+        rel_pos = find_current_node->rel_pos;
+        adjust_basepos_down(&base_pos, &rel_pos);
+
+        te_set_cursor(base_pos + rel_pos);
         return false;
     }
     else ui_alert();
