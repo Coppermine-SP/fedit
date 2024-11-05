@@ -34,8 +34,6 @@
 #define CURSOR_GOTO(row, col) printf("\x1b[%d;%dH", (row), (col))
 #define CURSOR_HIDE printf("\x1b[?25l")
 #define CURSOR_SHOW printf("\x1b[?25h")
-#define CURSOR_SAVE printf("\x1b[s")
-#define CURSOR_RESTORE printf("\x1b[u")
 #define CLEAR_LINE printf("\x1b[K")
 #define CLEAR_SCREEN printf("\x1b[2J")
 #define CLEAR_UP printf("\x1b[1J")
