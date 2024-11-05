@@ -617,6 +617,11 @@ void find_draw(){
     concat_string(screen_buf, "\x1b[7m", find_current_node->rel_pos, &len);
     concat_string(screen_buf, "\x1b[0m", find_current_node->rel_pos+find_pattern_len+4, &len);
     ui_draw_text(screen_buf, len);
+
+    /*
+        Windows CRT에서 free() 호출 시 ntdll!RtlRegisterSecureMemoryCacheCallback() assert가 발생하는 경우에는,
+        Memory overflow가 발생하였는지 확인하십시오.
+    */
     free(screen_buf);
 }
 
