@@ -590,6 +590,7 @@ static node_t* find_current_node;
 static int find_node_count;
 static char* find_pattern_str;
 static int find_pattern_len;
+static char* find_screen_buf = NULL;
 
 void find_draw(){
      ui_set_status(0, total_lines, file_name);
@@ -597,7 +598,17 @@ void find_draw(){
     char message_buf[100];
     sprintf(message_buf, "Pattern \"%s\": %d / %d (HELP: ESC = Exit | Enter = Edit | LArrow = Prev | RArrow = Next)", find_pattern_str, find_current_node->idx+1, find_node_count);
     ui_show_message(message_buf);
-    ui_draw_text(buf + find_current_node->base_pos, buf_len - find_current_node->base_pos);
+
+    int base = find_current_node->base_pos;
+    int rel = find_current_node->rel_pos;
+    int len = buf_len-base;
+    
+    adjust_basepos_down(&base, &rel);
+    if(find_screen_buf != NULL) free(find_screen_buf);
+    find_screen_buf = malloc(max_screen_pos() *sizeof(char));
+
+    memcpy(find_screen_buf, buf + base, max_screen_pos() % len);
+    ui_draw_text(find_screen_buf, len);
 }
 
 bool find_input_event(enum key_type type, char c){
@@ -697,6 +708,7 @@ bool find_function(){
     }
 
     free(find_pattern_str);
+    free(find_screen_buf);
     ui_show_default_message();
     editor_draw(true);
     return true;
