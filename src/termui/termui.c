@@ -15,6 +15,7 @@
 
 // #region Macro constants
 #define MESSAGE_BUFFER_SIZE 150
+#define STATUS_BUFFER_SIZE 50
 #define SCREEN_BUFFER_SIZE 10000
 
 #define SGR_BEGIN '\x1b'
@@ -93,9 +94,9 @@ static void draw_status(){
     CURSOR_GOTO(terminal_size.rows-1, 0);
     CLEAR_LINE;
 
-    char left_buf[40];
-    char right_buf[20];
-    char filetype_string[15];
+    char left_buf[STATUS_BUFFER_SIZE];
+    char right_buf[STATUS_BUFFER_SIZE];
+    char filetype_string[STATUS_BUFFER_SIZE];
     bool has_filetype = false;
 
     if(status.file_name != NULL)
@@ -192,7 +193,7 @@ static int prompt_input_idx;
 static bool prompt_input_event(enum key_type type, char c){
     /*
         I considered making this function to nested functions in ui_show_prompt()
-        to remove global variables for this prompt behavior and limit the visiblity of this function.
+        to remove global variables for this prompt behavior and limit the visibility of this function.
 
         However, nested functions are not part of the C standard; it is an extension in GNU C.
         https://gcc.gnu.org/onlinedocs/gcc/Nested-Functions.html
