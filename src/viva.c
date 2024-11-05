@@ -5,6 +5,7 @@
     See this repository from GitHub: https://github.com/Coppermine-SP/fedit
  */
 
+// #region Includes
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -12,6 +13,7 @@
 #include "textengine/textengine.h"
 #include "termui/termui.h"
 #include "termui/termui_types.h"
+// #endregion
 
 // #region Macro constants
 #define PATTERN_LEN_MIN 2
@@ -712,6 +714,7 @@ bool find_function(){
         find_exit:
         ui_alert();
         ui_show_message("\x1b[1;31mFind: No results.\x1b[0m");
+        editor_draw_cursor();
         return true;
     }
     else{
@@ -729,7 +732,7 @@ bool find_function(){
 
     free(find_pattern_str);
     ui_show_default_message();
-    editor_draw(false);
+    editor_draw(true);
     return true;
 }
 // #endregion
@@ -745,7 +748,10 @@ bool save_function(bool force_new_file){
         bool is_new_file = false;
         if(file_name == NULL || force_new_file){
             char buf[PROMPT_INPUT_LEN_MAX];
-            if(ui_show_prompt("New file name: ", buf, editor_resize_event) == PROMPT_CANCELLED) return true;
+            if(ui_show_prompt("New file name: ", buf, editor_resize_event) == PROMPT_CANCELLED){
+                editor_draw_cursor();
+                return true;
+            }
             is_new_file= true;
 
             if(is_string_malloc) free(file_name);
