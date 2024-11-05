@@ -598,10 +598,9 @@ static node_t* find_current_node;
 static int find_node_count;
 static char* find_pattern_str;
 static int find_pattern_len;
-static char* find_screen_buf = NULL;
 
 void find_draw(){
-     ui_set_status(get_base_lines(find_current_node->base_pos), total_lines, file_name);
+    ui_set_status(get_base_lines(find_current_node->base_pos), total_lines, file_name);
 
     char message_buf[100];
     sprintf(message_buf, "Pattern \"%s\": %d / %d", find_pattern_str, find_current_node->idx+1, find_node_count);
@@ -612,12 +611,13 @@ void find_draw(){
     int len = buf_len-base > max_screen_pos() ? max_screen_pos() : buf_len-base;
     
     adjust_basepos_down(&base, &rel);
-    find_screen_buf = (char*)malloc((max_screen_pos() *sizeof(char))+2);
+    char* screen_buf = (char*)malloc((max_screen_pos()*sizeof(char))+8);
 
-    memcpy(find_screen_buf, buf + base, len);
-    concat_string(find_screen_buf, "\x1b[7m", find_current_node->rel_pos, &len);
-    concat_string(find_screen_buf, "\x1b[0m", find_current_node->rel_pos+find_pattern_len+4, &len);
-    ui_draw_text(find_screen_buf, len);
+    memcpy(screen_buf, buf + base, len);
+    concat_string(screen_buf, "\x1b[7m", find_current_node->rel_pos, &len);
+    concat_string(screen_buf, "\x1b[0m", find_current_node->rel_pos+find_pattern_len+4, &len);
+    ui_draw_text(screen_buf, len);
+    free(screen_buf);
 }
 
 bool find_input_event(enum key_type type, char c){
@@ -723,7 +723,6 @@ bool find_function(){
     }
 
     free(find_pattern_str);
-    free(find_screen_buf);
     ui_show_default_message();
     editor_draw(false);
     return true;
