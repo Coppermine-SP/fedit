@@ -23,7 +23,7 @@
 #define TITLE_STRING "Welcome to fedit (Visual Text Editor)."
 #define SUBTITLE_STRING "See this repository on GitHub: Coppermine-SP/fedit"
 #define COPYRIGHT_STRING "Copyright (C) 2024-2025 Coppermine-SP."
-#define DEFAULT_MESSAGE_STRING "HELP: Ctrl-S = Save | Ctrl-Q = Quit | Ctrl-F = Find"
+#define DEFAULT_MESSAGE_STRING "HELP: Ctrl-S = Save | Ctrl-N = Save as | Ctrl-Q = Quit | Ctrl-F = Find"
 #define DEFAULT_FILE_NAME_STRING "No Name"
 #define DEFAULT_FILE_TYPE_STRING "no ft"
 #define EMPTY_ROW_STRING "\x1b[2m~\x1b[0m"
@@ -247,10 +247,9 @@ void ui_draw_text(const char* begin, int len){
     int line_pos = 0;
     int line_left = 0;
     for(int i = 1; i < terminal_size.rows - 1; i++){
-        CURSOR_GOTO(i, 0);
-
+        CURSOR_GOTO(i, 1);
         if((cur - begin) < len){
-            for(int j = 0; j < terminal_size.cols; j++){
+            for(int j = 1; j <= terminal_size.cols; j++){
                 if((cur - begin) >= len) break;
 
                 if(line_left > 0){
@@ -296,17 +295,16 @@ void ui_draw_text(const char* begin, int len){
                     j--;
                     cur++;
                 }
-                else {
-                    if(*cur == SGR_BEGIN) is_sgr = true;
-                    
+                else if(*cur == SGR_BEGIN || (is_sgr && *cur == SGR_END)){
+                    is_sgr = *cur == SGR_BEGIN;
+                    j--;
                     printf("%c", *(cur++));
-                    if(!is_sgr)line_pos++;
-                    else j--;
-
-                    if(*cur == SGR_END){
-                        is_sgr = false;
-                        j--;
-                    }
+                }
+                else {
+                    printf("%c", *(cur++));
+                    if(is_sgr) j--;
+                    else line_pos++;
+                    
                 }
 
             }
