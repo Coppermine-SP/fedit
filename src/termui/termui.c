@@ -17,6 +17,9 @@
 #define MESSAGE_BUFFER_SIZE 150
 #define SCREEN_BUFFER_SIZE 10000
 
+#define SGR_BEGIN '\x1b'
+#define SGR_END 'm'
+
 #define TITLE_STRING "Welcome to fedit (Visual Text Editor)."
 #define SUBTITLE_STRING "See this repository on GitHub: Coppermine-SP/fedit"
 #define COPYRIGHT_STRING "Copyright (C) 2024-2025 Coppermine-SP."
@@ -233,6 +236,7 @@ int ui_show_prompt(char* const msg, char* buf, void (*resize_callback)()){
 }
 
 void ui_draw_text(const char* begin, int len){
+    static bool is_sgr = false;
     enable_stdout_buffer();
     CURSOR_HIDE;
     CURSOR_GOTO(terminal_size.rows-2, terminal_size.cols);
@@ -293,8 +297,16 @@ void ui_draw_text(const char* begin, int len){
                     cur++;
                 }
                 else {
+                    if(*cur == SGR_BEGIN) is_sgr = true;
+                    
                     printf("%c", *(cur++));
-                    line_pos++;
+                    if(!is_sgr)line_pos++;
+                    else j--;
+
+                    if(*cur == SGR_END){
+                        is_sgr = false;
+                        j--;
+                    }
                 }
 
             }
