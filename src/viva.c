@@ -586,12 +586,36 @@ typedef struct node{
     int rel_pos;
 } node_t;
 
+static node_t* find_current_node;
+static int find_node_count;
+static char* find_pattern_str;
+static int find_pattern_len;
+
 void find_draw(){
      ui_set_status(0, total_lines, file_name);
-     ui_show_message("Pattern \"Windows\": 1 / 24 (HELP: ESC = Exit | Enter = Edit | LArrow = Prev | RArrow = Next)");
+
+    char message_buf[100];
+    sprintf(message_buf, "Pattern \"%s\": %d / %d (HELP: ESC = Exit | Enter = Edit | LArrow = Prev | RArrow = Next)", find_pattern_str, find_current_node->idx+1, find_node_count);
+    ui_show_message(message_buf);
+    ui_draw_text(buf + find_current_node->base_pos, buf_len - find_current_node->base_pos);
 }
 
 bool find_input_event(enum key_type type, char c){
+    if(type == LEFT_ARROW){
+        if(find_current_node->prev == NULL) ui_alert();
+        else find_current_node = find_current_node->prev;
+    }
+    else if(type == RIGHT_ARROW){
+        if(find_current_node->next == NULL) ui_alert();
+        else find_current_node = find_current_node->next;
+    }
+    else if(type == ESC) return false;
+    else if(type == ENTER){
+        return false;
+    }
+    else ui_alert();
+
+    find_draw();
     return true;
 }
 
@@ -601,16 +625,16 @@ void find_resize_event(){
 }
 
 bool find_function(){
-    char pattern_str[PROMPT_INPUT_LEN_MAX];
-    int pattern_len = ui_show_prompt("Pattern: ", pattern_str, editor_resize_event);
+    find_pattern_str = calloc(PATTERN_LEN_MAX, sizeof(char));
+    find_pattern_len = ui_show_prompt("Pattern: ", find_pattern_str, editor_resize_event);
 
-    if(pattern_len == PROMPT_CANCELLED) return true;
-    else if(pattern_len < PATTERN_LEN_MIN){
+    if(find_pattern_len == PROMPT_CANCELLED) return true;
+    else if(find_pattern_len < PATTERN_LEN_MIN){
         ui_alert();
         ui_show_message("\x1b[1;31mFind: Pattern is too short.\x1b[0m");
         return true;
     }
-    else if(pattern_len > PATTERN_LEN_MAX){
+    else if(find_pattern_len > PATTERN_LEN_MAX){
         ui_alert();
         ui_show_message("\x1b[1;31mFind: Pattern is too long.\x1b[0m");
         return true;
@@ -618,19 +642,19 @@ bool find_function(){
 
     te_close_cursor();
     buffer_update();
-    if(pattern_len > buf_len) goto find_exit;
+    if(find_pattern_len > buf_len) goto find_exit;
 
     node_t* head = NULL;
     node_t* cur = NULL;
-    int pattern_hash = hash(pattern_str, pattern_len);
-    int window_hash = hash(buf, pattern_len);
+    int pattern_hash = hash(find_pattern_str, find_pattern_len);
+    int window_hash = hash(buf, find_pattern_len);
     int found = 0;
     int current_line_base_pos = 0;
 
     //Rabin-Karp algorithm
     for(int i = 0; i < buf_len; i++){
-        if(buf[i] == LF) current_line_base_pos = i;
-        if(window_hash == pattern_hash && compare_string(buf + i, pattern_str, pattern_len)){
+        if(buf[i] == LF) current_line_base_pos = i+1;
+        if(window_hash == pattern_hash && compare_string(buf + i, find_pattern_str, find_pattern_len)){
             node_t* node = (node_t*)malloc(sizeof(node_t));
             if(cur != NULL) cur->next = node;
 
@@ -644,17 +668,21 @@ bool find_function(){
             if(head == NULL)head = node;
         }
 
-        int end = i + pattern_len;
+        int end = i + find_pattern_len;
         if(end > buf_len) break;
 
         //Sliding window
-        window_hash = 2 * (window_hash - (buf[i] * power(2, pattern_len-1))) + buf[end];
+        window_hash = 2 * (window_hash - (buf[i] * power(2, find_pattern_len-1))) + buf[end];
     }
+
+    find_current_node = head;
+    find_node_count = found;
     
     if(head == NULL){
         find_exit:
         ui_alert();
         ui_show_message("\x1b[1;31mFind: No results.\x1b[0m");
+        return true;
     }
     else{
         find_draw();
@@ -668,6 +696,9 @@ bool find_function(){
         while(cur != NULL);
     }
 
+    free(find_pattern_str);
+    ui_show_default_message();
+    editor_draw(true);
     return true;
 }
 // #endregion
