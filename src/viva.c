@@ -605,7 +605,7 @@ void find_draw(){
     
     adjust_basepos_down(&base, &rel);
     if(find_screen_buf != NULL) free(find_screen_buf);
-    find_screen_buf = malloc(max_screen_pos() *sizeof(char));
+    find_screen_buf = malloc((max_screen_pos() *sizeof(char))+2);
 
     memcpy(find_screen_buf, buf + base, max_screen_pos() % len);
     ui_draw_text(find_screen_buf, len);
