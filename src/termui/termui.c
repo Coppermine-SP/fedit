@@ -15,7 +15,7 @@
 
 // #region Macro constants
 #define MESSAGE_BUFFER_SIZE 150
-#define STATUS_BUFFER_SIZE 100
+#define STATUS_BUFFER_SIZE 50
 #define SCREEN_BUFFER_SIZE 10000
 
 #define SGR_BEGIN '\x1b'
@@ -100,8 +100,8 @@ static void draw_status(){
     if(status.file_name != NULL)
     has_filetype = get_file_type(status.file_name, filetype_string, 15);
     
-    int left = sprintf(left_buf,"[%s] - %d lines", (status.file_name == NULL ? DEFAULT_FILE_NAME_STRING : status.file_name), status.total_lines);
-    int right = sprintf(right_buf,"%s | %d/%d ",(has_filetype) ? filetype_string : DEFAULT_FILE_TYPE_STRING ,status.cursor_line, status.total_lines);
+    int left = snprintf(left_buf, STATUS_BUFFER_SIZE, "[%s] - %d lines", (status.file_name == NULL ? DEFAULT_FILE_NAME_STRING : status.file_name), status.total_lines);
+    int right = snprintf(right_buf, STATUS_BUFFER_SIZE, "%s | %d/%d ",(has_filetype) ? filetype_string : DEFAULT_FILE_TYPE_STRING ,status.cursor_line, status.total_lines);
 
     printf("%s",left_buf);
     for(int i = 0; i < terminal_size.cols - (left + right); i++) printf(" ");
