@@ -15,7 +15,7 @@
 
 // #region Macro constants
 #define MESSAGE_BUFFER_SIZE 150
-#define STATUS_BUFFER_SIZE 50
+#define STATUS_BUFFER_SIZE 100
 #define SCREEN_BUFFER_SIZE 10000
 
 #define SGR_BEGIN '\x1b'
