@@ -1,8 +1,6 @@
 # fedit
 <img src="https://img.shields.io/badge/c-064F8C?style=for-the-badge&logo=c&logoColor=white">
 
-**2024년 창원대학교 컴퓨터공학과 고급자료구조 과제**
-
 A simple text editor.
 
 <p align="center">
