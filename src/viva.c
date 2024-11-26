@@ -373,11 +373,12 @@ void cursor_pgdown(){
     while(get_screen_pos(base_pos, next - base_pos) < max_screen_pos()){
         tmp = next;
         for(int i = 0; next+i <= buf_len; i++){
-            if(buf[next + i] == LF){
+            if(buf[next + i] == LF && (next + i) != buf_len-1){
                 next += i+1;
                 break;
             }
-            else if(next+i == buf_len) goto out;     
+            
+            if(next+i == buf_len) goto out;     
         }
     }
 
