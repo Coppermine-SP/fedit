@@ -5,6 +5,8 @@
     See this repository from GitHub: https://github.com/Coppermine-SP/fedit
  */
 
+#define _CRT_SECURE_NO_WARNINGS
+
 // #region Includes
 #include <stdlib.h>
 #include <string.h>

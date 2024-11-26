@@ -7,6 +7,7 @@
 #include <windows.h>
 #include <conio.h>
 #include <stdio.h>
+#include <ctype.h>
 #include "native_termui.h"
 
 #define ESC_KEY 27
