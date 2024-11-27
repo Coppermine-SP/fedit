@@ -480,7 +480,7 @@ void editor_delete(){
         int i;
         for(i = 0; i < cols; i++){
             if(base_pos-i == 0) break;
-            else if(buf[base_pos-i] == LF){
+            else if(i > 1 && buf[base_pos-i] == LF){
                 i--;
                 break;
             }
