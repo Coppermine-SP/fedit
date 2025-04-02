@@ -10,6 +10,7 @@
 #include <ctype.h>
 #include "native_termui.h"
 
+#define PLATFORM_NAME "Win32"
 #define ESC_KEY 27
 #define ENTER_KEY 13
 #define BACKSPACE_KEY 8
@@ -126,5 +127,9 @@ enum key_type nt_get_raw_input(char* out){
         Sleep(1);
         return TIMEOUT;
     }
+}
+
+const char* const nt_get_platform_name(){
+    return PLATFORM_NAME;
 }
 #endif

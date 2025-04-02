@@ -16,5 +16,6 @@ typedef struct {
 terminal_size_t nt_get_terminal_size();
 void nt_configure_term_env();
 void nt_restore_term_env();
+const char* const nt_get_platform_name();
 enum key_type nt_get_raw_input(char* out);
 

@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <ctype.h>
 
+#define PLATFORM_NAME "POSIX"
 #define CSI 91
 #define MOUSE_TRACK 'M'
 #define MOUSE_WHEEL_UP 0b1100000
@@ -137,6 +138,10 @@ enum key_type nt_get_raw_input(char* out){
         }
     }
     else return TIMEOUT;
+}
+
+const char* const nt_get_platform_name(){
+    return PLATFORM_NAME;
 }
 
 #endif
