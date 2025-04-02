@@ -25,7 +25,9 @@
 #define TITLE_STRING "Welcome to fedit (Visual Text Editor)."
 #define SUBTITLE_STRING "See this repository on GitHub: Coppermine-SP/fedit"
 #define COPYRIGHT_STRING "Copyright (C) 2024-2025 Coppermine-SP."
-#define DEFAULT_MESSAGE_STRING "HELP: Ctrl-S = Save | Ctrl-N = Save as | Ctrl-Q = Quit | Ctrl-F = Find"
+#define VERSION_STRING "1.21"
+#define PROGRAM_NAME_STRING "fedit"
+#define COMMAND_HELP_STRING "\x1b[4mO\x1b[0mpen  \x1b[4mS\x1b[0mave  Save \x1b[4ma\x1b[0ms  \x1b[4mF\x1b[0mind  \x1b[4mQ\x1b[0muit"
 #define DEFAULT_FILE_NAME_STRING "No Name"
 #define DEFAULT_FILE_TYPE_STRING "no ft"
 #define EMPTY_ROW_STRING "\x1b[2m~\x1b[0m"
@@ -54,6 +56,7 @@ typedef struct{
 static terminal_size_t terminal_size;
 static status_t status;
 static bool motd_showing = false;
+static char default_message[100];
 // #endregion
 
 // #region Helper functions
@@ -140,7 +143,7 @@ void ui_show_message(const char* msg){
 }
 
 void ui_show_default_message(){
-    ui_show_message(DEFAULT_MESSAGE_STRING);
+    ui_show_message(default_message);
 }
 
 void ui_set_motd(bool state){
@@ -228,7 +231,7 @@ int ui_show_prompt(char* const msg, char* buf, void (*resize_callback)()){
     ui_show_message(msg);
     ui_input_loop(prompt_input_event, resize_callback);
 
-    ui_show_message(DEFAULT_MESSAGE_STRING);
+    ui_show_default_message();
     if(prompt_input_buf[0] == '\0') return PROMPT_CANCELLED;
 
     strcpy(buf, prompt_input_buf);
@@ -331,6 +334,7 @@ void ui_init(){
     CLEAR_SCREEN;
 
     terminal_size = nt_get_terminal_size();
+    snprintf(default_message, 100, "%s (%s, %s) | %s", PROGRAM_NAME_STRING, nt_get_platform_name(), VERSION_STRING, COMMAND_HELP_STRING);
     ui_show_default_message();
 }
 
