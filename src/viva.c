@@ -169,11 +169,8 @@ void signal_handler(int sig){
 
 // #region Cursor functions
 void cursor_move_up(){
-    if(rel_pos == 0 && base_pos == 0){
-        ui_alert();
-        return;
-    }
-
+    if(rel_pos == 0 && base_pos == 0) return;
+    
     bool nextline = false;
     int i = rel_pos-1;
     //상대 주소가 음수이면, 기준 주소를 상대 주소만큼 빼고, 상대 주소를 0으로 합니다.
@@ -206,10 +203,7 @@ void cursor_move_down(){
         }
     }
     
-    if(next == rel_pos){
-        ui_alert();
-        return;
-    }
+    if(next == rel_pos) return;
 
     int base = base_pos;
     int rel = next;
