@@ -15,7 +15,9 @@
 #include <ctype.h>
 
 #define CSI 91
-#define MOUSE_POS 'M'
+#define MOUSE_TRACK 'M'
+#define MOUSE_WHEEL_UP 0b1100000
+#define MOUSE_WHEEN_DOWN 0b1100001
 #define ESC_KEY 27
 #define ENTER_KEY 13
 #define BACKSPACE_KEY 127
@@ -107,9 +109,13 @@ enum key_type nt_get_raw_input(char* out){
                                 else return PGDOWN;
                             }
                             return ESC;
-                        case MOUSE_POS:
-                            for(int i = 0; i < 6; i++) if(nt_get_raw_input(NULL) == TIMEOUT) break;
-                            return TIMEOUT;
+                        case MOUSE_TRACK:
+                            nt_get_raw_input(buf + 2);
+                            while(nt_get_raw_input(NULL) != TIMEOUT);
+
+                            if(buf[2] == MOUSE_WHEEL_UP) return UP_ARROW;
+                            else if(buf[2] == MOUSE_WHEEN_DOWN) return DOWN_ARROW;
+                            else return TIMEOUT;
                         default:
                             //Discard all other function keys
                             while(true) if(nt_get_raw_input(NULL) == TIMEOUT) break;
