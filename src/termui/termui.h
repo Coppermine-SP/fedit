@@ -7,7 +7,7 @@
 #include "termui_types.h"
 
 //탭 문자의 간격
-#define TAB_SPACE 8
+#define TAB_SPACE 4
 
 //LF 문자
 #define LF '\n'
