@@ -12,6 +12,7 @@
 #include <termios.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include <ctype.h>
 
 #define PLATFORM_NAME "POSIX"
@@ -19,6 +20,8 @@
 #define MOUSE_TRACK 'M'
 #define MOUSE_WHEEL_UP 0b1100000
 #define MOUSE_WHEEN_DOWN 0b1100001
+#define MOUSE_M0 0b100000
+#define MOUSE_RELEASE 0b100011
 #define ESC_KEY 27
 #define ENTER_KEY 13
 #define BACKSPACE_KEY 127
@@ -33,6 +36,7 @@
 #define RIGHT_ARROW_KEY 67
 
 static struct termios default_attribute;
+static bool mouse_left_pressing = false;
 
 terminal_size_t nt_get_terminal_size(){
     struct winsize w;
@@ -114,9 +118,15 @@ enum key_type nt_get_raw_input(char* out){
                             nt_get_raw_input(buf + 2);
                             while(nt_get_raw_input(NULL) != TIMEOUT);
 
-                            if(buf[2] == MOUSE_WHEEL_UP) return UP_ARROW;
-                            else if(buf[2] == MOUSE_WHEEN_DOWN) return DOWN_ARROW;
-                            else return TIMEOUT;
+                            /*
+                                Alternative Scrolling function - Apr 4, 2025
+                                scroll horizontaily by mouse wheel with pressing mouse m0(left).
+                            */
+                            if(buf[2] == MOUSE_WHEEL_UP) return mouse_left_pressing ? LEFT_ARROW : UP_ARROW;
+                            else if(buf[2] == MOUSE_WHEEN_DOWN) return mouse_left_pressing ? RIGHT_ARROW : DOWN_ARROW;
+                            else if(buf[2] == MOUSE_M0) mouse_left_pressing = true;
+                            else if(buf[2] == MOUSE_RELEASE) mouse_left_pressing = false;
+                            return TIMEOUT;
                         default:
                             //Discard all other function keys
                             while(true) if(nt_get_raw_input(NULL) == TIMEOUT) break;
