@@ -20,7 +20,7 @@
 // #region Macro constants
 #define PATTERN_LEN_MIN 2
 #define PATTERN_LEN_MAX 30
-#define MAX_FILE_NAME 50
+#define MAX_LEN_FILE_NAME 50
 // #endregion
 
 // #region Global variables
@@ -169,8 +169,8 @@ void signal_handler(int sig){
 }
 
 void set_filename(const char* buf){
-    if(file_name == NULL) file_name = calloc(MAX_FILE_NAME, sizeof(char));
-    strncpy(file_name, buf, MAX_FILE_NAME);
+    if(file_name == NULL) file_name = calloc(MAX_LEN_FILE_NAME, sizeof(char));
+    strncpy(file_name, buf, MAX_LEN_FILE_NAME);
 }
 // #endregion
 
@@ -803,7 +803,7 @@ bool open_function(bool new_file){
 
     }
     else{
-
+        char input[MAX_LEN_FILE_NAME]
     }
     
     buffer_update();
