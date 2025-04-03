@@ -13,6 +13,7 @@ typedef int IRESULT;
 
 /// @brief TextEngine을 초기화합니다.
 /// @param file_name (nullable) 파일 이름
+/// @return 초기화 결과
 IRESULT te_init(const char* file_name);
 
 /// @brief 종료하기 위해 정리합니다.
