@@ -230,8 +230,7 @@ void cursor_move_down(){
 
 void cursor_move_left(){
     if(rel_pos == 0){
-        if(base_pos == 0) ui_alert();
-        else{
+        if(base_pos != 0){
             int i;
             for(i = 0; i < cols; i++)
                 if(buf[base_pos-i] == LF) {
@@ -253,10 +252,8 @@ void cursor_move_left(){
 }
 
 void cursor_move_right(){
-    if((base_pos + rel_pos) >= buf_len || buf[base_pos + rel_pos] == LF){
-        ui_alert();
-        return;
-    }
+    if((base_pos + rel_pos) >= buf_len || buf[base_pos + rel_pos] == LF) return;
+    
 
     int next = rel_pos+1;
     int base = base_pos;
