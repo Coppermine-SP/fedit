@@ -397,7 +397,8 @@ void cursor_pgdown(){
 int main(int argc, char *argv[]){
     if (argc > 1) set_filename(argv[1]);
 
-    te_init(file_name);
+    IRESULT result = te_init(file_name);
+
     buffer_update();
     calc_total_lines();
 
@@ -408,6 +409,12 @@ int main(int argc, char *argv[]){
     editor_draw(true);
     if (argc == 1) ui_set_motd(true);
 
+    if(result == IRESULT_ACCESS_ERROR){
+        file_name = NULL;
+        ui_alert();
+        ui_show_message("\x1b[1;31mERR_FILE_ACCESS: Permission denied\x1b[0m");
+        editor_draw(true);
+    }
     ui_input_loop(editor_input_event, editor_resize_event);
     editor_quit();
 }
@@ -808,7 +815,17 @@ bool open_function(bool new_file){
         base_pos = 0;
         rel_pos = 0;
         te_dispose();
-        te_init(file_name);
+        IRESULT result = te_init(file_name);
+
+        if(result == IRESULT_NOENT_ERROR){
+            ui_alert();
+            ui_show_message("\x1b[1;31mERR_FILE_NOENT: No such file.\x1b[0m");
+        }
+        else if(result == IRESULT_ACCESS_ERROR){
+            ui_alert();
+            ui_show_message("\x1b[1;31mERR_FILE_ACCESS: Permission denied\x1b[0m");
+            open_function(true);
+        }
     }
 
     buffer_update();
