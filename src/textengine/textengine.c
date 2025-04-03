@@ -13,6 +13,7 @@
 // #region Macro constants
 #define GAP_SIZE 30
 #define MEMORY_EXPANSION_FACTOR 5
+#define BUF_INIT_SIZE 1024
 // #endregion
 
 // #region Global variables
@@ -21,7 +22,7 @@ static int buf_len;
 static int buf_high_watermark;
 
 static int cursor_pos;
-static bool gap_opened = false;
+static bool gap_opened;
 static int gap_begin;
 // #endregion
 
@@ -115,10 +116,13 @@ void te_init(char* const file_name){
         empty_file:
 
         buf_len = 0;
-        buf = (char*)calloc(1, sizeof(char));
+        buf = (char*)calloc(BUF_INIT_SIZE, sizeof(char));
     }
 
-    buf_high_watermark = buf_len;
+    buf_high_watermark = BUF_INIT_SIZE;
+    gap_opened = false;
+    gap_begin = 0;
+    cursor_pos = 0;
 }
 
 void te_dispose(){
