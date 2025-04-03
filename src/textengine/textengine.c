@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <errno.h>
+#include "textengine.h"
 
 // #region Macro constants
 #define GAP_SIZE 30
@@ -95,7 +97,8 @@ bool te_buffer_save(char* const file_name){
     return buf_len == written;
 }
 
-void te_init(char* const file_name){
+IRESULT te_init(const char* file_name){
+    int err = 0;
     if(file_name != NULL){
         /*
             Only binary mode has well-defined behavior in standard C.
@@ -103,7 +106,10 @@ void te_init(char* const file_name){
         */
         FILE* file = fopen(file_name, "rb");
 
-        if(file == NULL) goto empty_file;
+        if(file == NULL){
+            err = errno;
+            goto empty_file;
+        }
         fseek(file, 0, SEEK_END);
         buf_len = ftell(file);
         fseek(file, 0, SEEK_SET);
@@ -114,7 +120,6 @@ void te_init(char* const file_name){
     }
     else{
         empty_file:
-
         buf_len = 0;
         buf = (char*)calloc(BUF_INIT_SIZE, sizeof(char));
     }
@@ -123,6 +128,11 @@ void te_init(char* const file_name){
     gap_opened = false;
     gap_begin = 0;
     cursor_pos = 0;
+
+    if(err == 0) return IRESULT_SUCEESS;
+    else if(err == 2) return IRESULT_NOENT_ERROR;
+    else if(err == 13) return IRESULT_ACCESS_ERROR;
+    else return IRESULT_UNKNOWN_ERROR;
 }
 
 void te_dispose(){

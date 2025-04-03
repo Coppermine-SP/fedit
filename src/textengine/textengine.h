@@ -5,9 +5,15 @@
 
 #include <stdbool.h>
 
+#define IRESULT_SUCEESS 0
+#define IRESULT_NOENT_ERROR 1
+#define IRESULT_ACCESS_ERROR 2
+#define IRESULT_UNKNOWN_ERROR 3
+typedef int IRESULT;
+
 /// @brief TextEngine을 초기화합니다.
 /// @param file_name (nullable) 파일 이름
-void te_init(const char* file_name);
+IRESULT te_init(const char* file_name);
 
 /// @brief 종료하기 위해 정리합니다.
 void te_dispose();
