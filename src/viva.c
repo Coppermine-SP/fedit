@@ -752,7 +752,7 @@ bool save_function(bool force_new_file){
     else{
         bool is_new_file = false;
         if(file_name == NULL || force_new_file){
-            char buf[MAX_FILE_NAME];
+            char buf[MAX_LEN_FILE_NAME];
             if(ui_show_prompt("New file name: ", buf, 50, editor_resize_event) == PROMPT_CANCELLED){
                 editor_draw_cursor();
                 return true;
@@ -800,13 +800,22 @@ bool open_function(bool new_file){
 
         te_dispose();
         te_init(NULL);
-
+        if(file_name != NULL) free(file_name);
+        file_name = NULL;
     }
     else{
-        char input[MAX_LEN_FILE_NAME]
+        char input[MAX_LEN_FILE_NAME];
+        if(ui_show_prompt("File Name: ", input, MAX_LEN_FILE_NAME, editor_resize_event) == PROMPT_CANCELLED) return true;
+
+        set_filename(input);
+        base_pos = 0;
+        rel_pos = 0;
+        te_dispose();
+        te_init(file_name);
     }
-    
+
     buffer_update();
+    calc_total_lines();
     editor_draw(true);
     return true;
 }
