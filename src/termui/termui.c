@@ -23,11 +23,11 @@
 #define SGR_END 'm'
 
 #define TITLE_STRING "Welcome to fedit (Visual Text Editor)."
-#define SUBTITLE_STRING "See this repository on GitHub: Coppermine-SP/fedit"
+#define SUBTITLE_STRING "Lightweight Open Source Visual Text Editor"
 #define COPYRIGHT_STRING "Copyright (C) 2024-2025 Coppermine-SP."
-#define VERSION_STRING "1.21"
+#define VERSION_STRING "1.10"
 #define PROGRAM_NAME_STRING "fedit"
-#define COMMAND_HELP_STRING "\x1b[4mO\x1b[0mpen  \x1b[4mS\x1b[0mave  Save \x1b[4ma\x1b[0ms  \x1b[4mF\x1b[0mind  \x1b[4mQ\x1b[0muit"
+#define COMMAND_HELP_STRING "Commands: \x1b[4mN\x1b[0mew  \x1b[4mO\x1b[0mpen  \x1b[4mS\x1b[0mave  Save \x1b[4ma\x1b[0ms  \x1b[4mF\x1b[0mind  \x1b[4mQ\x1b[0muit"
 #define DEFAULT_FILE_NAME_STRING "No Name"
 #define DEFAULT_FILE_TYPE_STRING "no ft"
 #define EMPTY_ROW_STRING "\x1b[2m~\x1b[0m"
@@ -56,7 +56,7 @@ typedef struct{
 static terminal_size_t terminal_size;
 static status_t status;
 static bool motd_showing = false;
-static char default_message[100];
+static char default_message[MESSAGE_BUFFER_SIZE];
 // #endregion
 
 // #region Helper functions
@@ -189,9 +189,10 @@ void ui_input_loop(bool (*input_callback)(enum key_type type, char c), void (*re
 }
 
 static char* prompt_msg;
-static char prompt_input_buf[PROMPT_INPUT_LEN_MAX];
+static char* prompt_input_buf;
 static char prompt_message_buf[MESSAGE_BUFFER_SIZE];
 static int prompt_input_idx;
+static int prompt_input_buf_len;
 static bool prompt_input_event(enum key_type type, char c){
     /*
         I considered making this function to nested functions in ui_show_prompt()
@@ -200,7 +201,7 @@ static bool prompt_input_event(enum key_type type, char c){
         However, nested functions are not part of the C standard; it is an extension in GNU C.
         https://gcc.gnu.org/onlinedocs/gcc/Nested-Functions.html
     */
-    if(prompt_input_idx - 1 > PROMPT_INPUT_LEN_MAX || type == ESC){
+    if(type == ESC){
         prompt_input_buf[0] = '\0';
         return false;
     }
@@ -212,7 +213,7 @@ static bool prompt_input_event(enum key_type type, char c){
         if(prompt_input_idx == 0) return false;
         prompt_input_buf[--prompt_input_idx] = '\0';
     }
-    else if(type == NORMAL_KEY){
+    else if ((prompt_input_idx < prompt_input_buf_len - 1) && type == NORMAL_KEY){
         prompt_input_buf[prompt_input_idx++] = c;
     }
     else return true;
@@ -223,18 +224,18 @@ static bool prompt_input_event(enum key_type type, char c){
     return true;
 }
 
-int ui_show_prompt(char* const msg, char* buf, void (*resize_callback)()){
+int ui_show_prompt(char* const msg, char* buf, int buf_len, void (*resize_callback)()){
     ui_alert();
     prompt_input_idx = 0;
-    memset(prompt_input_buf, 0, PROMPT_INPUT_LEN_MAX);
+    prompt_input_buf_len = buf_len;
+    prompt_input_buf = buf;
+    memset(buf, 0, buf_len);
     prompt_msg = msg;
     ui_show_message(msg);
     ui_input_loop(prompt_input_event, resize_callback);
 
     ui_show_default_message();
     if(prompt_input_buf[0] == '\0') return PROMPT_CANCELLED;
-
-    strcpy(buf, prompt_input_buf);
     return prompt_input_idx;
 }
 
@@ -334,7 +335,7 @@ void ui_init(){
     CLEAR_SCREEN;
 
     terminal_size = nt_get_terminal_size();
-    snprintf(default_message, 100, "%s (%s, %s) | %s", PROGRAM_NAME_STRING, nt_get_platform_name(), VERSION_STRING, COMMAND_HELP_STRING);
+    snprintf(default_message, MESSAGE_BUFFER_SIZE, "%s (%s, %s) | %s", PROGRAM_NAME_STRING, nt_get_platform_name(), VERSION_STRING, COMMAND_HELP_STRING);
     ui_show_default_message();
 }
 

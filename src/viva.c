@@ -20,10 +20,11 @@
 // #region Macro constants
 #define PATTERN_LEN_MIN 2
 #define PATTERN_LEN_MAX 30
+#define MAX_FILE_NAME 50
 // #endregion
 
 // #region Global variables
-static char* file_name;
+static char* file_name = NULL;
 static bool is_saved = true;
 static int total_lines = 0;
 
@@ -41,6 +42,7 @@ static int rows;
 bool quit_function();
 bool find_function();
 bool save_function(bool force_new_file);
+bool open_function(bool new_file);
 
 void editor_resize_event();
 bool editor_input_event(enum key_type type, char c);
@@ -164,6 +166,11 @@ void signal_handler(int sig){
         editor_quit();
         exit(0);
     }
+}
+
+void set_filename(const char* buf){
+    if(file_name == NULL) file_name = calloc(MAX_FILE_NAME, sizeof(char));
+    strncpy(file_name, buf, MAX_FILE_NAME);
 }
 // #endregion
 
@@ -391,7 +398,7 @@ void cursor_pgdown(){
 
 // #region Entrypoint
 int main(int argc, char *argv[]){
-    file_name  = argc > 1 ? argv[1] : NULL;
+    if (argc > 1) set_filename(argv[1]);
 
     te_init(file_name);
     buffer_update();
@@ -416,7 +423,9 @@ bool editor_input_event(enum key_type type, char c){
             if (c == CTRL_KEY('q')) return quit_function();
             else if (c == CTRL_KEY('f')) return find_function();
             else if (c == CTRL_KEY('s')) return save_function(false);
-            else if(c == CTRL_KEY('n')) return save_function(true);
+            else if(c == CTRL_KEY('a')) return save_function(true);
+            else if(c == CTRL_KEY('o')) return open_function(false);
+            else if(c == CTRL_KEY('n')) return open_function(true);
             else if (c == TAB) editor_insert(TAB);
             else{
                 ui_alert();
@@ -655,7 +664,7 @@ void find_resize_event(){
 
 bool find_function(){
     find_pattern_str = calloc(PATTERN_LEN_MAX, sizeof(char));
-    find_pattern_len = ui_show_prompt("Pattern: ", find_pattern_str, editor_resize_event);
+    find_pattern_len = ui_show_prompt("Pattern: ", find_pattern_str, PATTERN_LEN_MAX, editor_resize_event);
 
     if(find_pattern_len == PROMPT_CANCELLED) return true;
     else if(find_pattern_len < PATTERN_LEN_MIN){
@@ -736,7 +745,6 @@ bool find_function(){
 
 // #region Save
 bool save_function(bool force_new_file){
-    static bool is_string_malloc = false;
     if(is_saved){
         ui_alert();
         ui_show_message("There is no local changes to save.");
@@ -744,17 +752,14 @@ bool save_function(bool force_new_file){
     else{
         bool is_new_file = false;
         if(file_name == NULL || force_new_file){
-            char buf[PROMPT_INPUT_LEN_MAX];
-            if(ui_show_prompt("New file name: ", buf, editor_resize_event) == PROMPT_CANCELLED){
+            char buf[MAX_FILE_NAME];
+            if(ui_show_prompt("New file name: ", buf, 50, editor_resize_event) == PROMPT_CANCELLED){
                 editor_draw_cursor();
                 return true;
             }
-            is_new_file= true;
 
-            if(is_string_malloc) free(file_name);
-            file_name = (char*)malloc(PROMPT_INPUT_LEN_MAX * sizeof(char));
-            is_string_malloc = true;
-            strcpy(file_name, buf);
+            is_new_file= true;
+            set_filename(buf);
             editor_draw(false);
         }
 
@@ -772,6 +777,37 @@ bool save_function(bool force_new_file){
     }
 
     editor_draw_cursor();
+    return true;
+}
+// #endregion
+
+// #region Open
+bool open_function(bool new_file){
+    if(!is_saved){
+        while(true){
+            char input[2];
+            if(ui_show_prompt("Any unsaved changes will be lost. Are you sure to continue? (Y/N): ", input, 2, editor_resize_event) == PROMPT_CANCELLED || input[0] == 'n' || input[0] == 'N'){
+                ui_show_default_message();
+                return true;
+            }
+            else if(input[0] == 'y' || input[0] == 'Y') break;
+        }
+    }
+
+    if(new_file){
+        base_pos = 0;
+        rel_pos = 0;
+
+        te_dispose();
+        te_init(NULL);
+
+    }
+    else{
+
+    }
+    
+    buffer_update();
+    editor_draw(true);
     return true;
 }
 // #endregion
