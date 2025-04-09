@@ -1,6 +1,6 @@
 ## fedit 프로젝트 설계서 (Technical documentation)
 <p align="center">
-<img src="../img/sample-1.png" style="width:80%;text-align-center">
+<img src="../img/sample_1.png" style="width:80%;text-align-center">
 </p>
 fedit는 TUI 기반의 다중 플랫폼 (Windows, Linux, macOS)를 지원하는 텍스트 에디터입니다.
 
