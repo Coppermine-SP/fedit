@@ -1,10 +1,10 @@
 # fedit
 <img src="https://img.shields.io/badge/c-064F8C?style=for-the-badge&logo=c&logoColor=white">
 
-A simple text editor.
+Lightweight, Open-Source Visual Text Editor Project.
 
 <p align="center">
-<img src="https://github.com/user-attachments/assets/1dfa04d7-8abb-4800-8fa6-ca8179a12cf6" style="width:70%">
+<img src="/img/sample_1.png" style="width:50%"><img src="/img/sample_2.png" style="width:50%">
 </p>
 
 **Compatibility checked on:**
@@ -15,7 +15,7 @@ A simple text editor.
 |Microsoft Visual C++ 1936|x86-64|Windows 11 Enterprise x64|✅|
 |GCC 13.2.0|x86_64-w64-mingw32|Windows 11 Enterprise x64|✅|
 
-### Table of Content
+### Table of Contents
 - [Features](#features)
 - [Requirements](#requirements)
 - [Project Status Tracker](#project-status-tracker)
