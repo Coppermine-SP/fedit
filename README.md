@@ -7,6 +7,8 @@ Lightweight, Open-Source Visual Text Editor Project.
 <img src="/img/sample_1.png" style="width:50%"><img src="/img/sample_2.png" style="width:50%">
 </p>
 
+fedit is a lightweight, C-based visual text editor that implements all core editing features. It is a cross-platform project designed to run on both POSIX-compliant systems and Windows.
+
 **Compatibility checked on:**
 |Compiler|Target|OS|Checked|
 |-|-|-|:-:|
@@ -22,11 +24,30 @@ Lightweight, Open-Source Visual Text Editor Project.
 - [Technical Documentation](/doc/index.md)
 
 ## Features
+### 구현된 기능
 - 동적 화면 리사이징
-- 텍스트 수정
+- 텍스트 보기 및 편집
 - 방향 키, Home, End, PgUp, PgDn 키를 통한 커서 이동
 - 기존 파일 불러오기 및 저장
 - 탐색
+
+### 명령 및 조작
+- 새 파일 (Ctrl + N)
+- 파일 열기 (Ctrl + O)
+- 저장 (Ctrl + S)
+- 다른 이름으로 저장 (Ctrl + A)
+- 탐색 (Ctrl + F)
+- 나가기 (Ctrl + Q)
+- 행 스크롤 (방향키 위 또는 아래, 마우스 휠)
+- 열 스크롤 (방향키 왼쪽 또는 오른쪽, 마우스 왼쪽 키 + 마우스 휠)
+- 페이지 업 다운 (PgUp, PgDn)
+- 문단 처음 / 끝 (Home, End)
+- - -
+
+명령 인수에 파일 이름을 명시하여 해당 파일로 새 에디터 세션을 여십시오.
+```
+fedit /etc/hosts
+```
 
 ## Requirements
 - POSIX 호환 운영 체제 (Linux, macOS) 또는 Windows 10 1067 (Redstone 1) 이상의 운영 체제
